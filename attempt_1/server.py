@@ -156,18 +156,18 @@ def remove_file_from_bucket(bucket_name, file_name):
     output = ""
     bucket_abs_path = ROOT_PATH / bucket_name 
     if not bucket_abs_path.exists():
-        return "ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
-    file_abs_path = bucket_abs_path / bucket_name 
+        return f"ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
+    file_abs_path = bucket_abs_path / file_name 
     try:
         file_abs_path.unlink()
 
     except FileNotFoundError as e:
-        output = "ERROR: File {file_name} not found on bucket {bucket_name}"
+        output = f"ERROR: File {file_name} not found on bucket {bucket_name}"
     except:
-        output = "ERROR: File {file_name} could not be removed from {bucket_name}"
+        output = f"ERROR: File {file_name} could not be removed from {bucket_name}"
     finally:
-        if output == ""
-            output = "SUCCESS: File {file_name} has been removed from {bucket_name}"
+        if output == "":
+            output = f"SUCCESS: File {file_name} has been removed from {bucket_name}"
         return output
 
 def main():
