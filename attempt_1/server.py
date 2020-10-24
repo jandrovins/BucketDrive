@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import socket
 import threading
 import os
@@ -45,7 +46,8 @@ def read(sock):
         file_name = rm.data["file_name"]
         output = remove_file_from_bucket(str(rm.data["bucket_name"]), str(rm.data["file_name"]))
     elif rm.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value:
-        output = list_files(rm.data["bucket_name"])
+        bucket_name = rm.data["bucket_name"]
+        output = list_files(bucket_name)
     elif rm.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
         pass
     elif rm.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
@@ -95,7 +97,6 @@ def create_bucket(bucket_name): # bucket_name can be of the form "some/thing/str
     assert "/" not in bucket_name
 
     absolute_path = ROOT_PATH / bucket_name
-    print(f"--------AP: {absolute_path}, ROOT_PATH: {ROOT_PATH}, bucket_name: {bucket_name}")
 
     try:
         absolute_path.mkdir()
@@ -173,14 +174,12 @@ def remove_file_from_bucket(bucket_name, file_name):
             output = f"SUCCESS: File {file_name} has been removed from {bucket_name}"
         return output
 
-def list_files_from_bucket(bucket_name):
+def list_files(bucket_name):
     global ROOT_PATH
     assert issubclass(type(ROOT_PATH), pathlib.Path)
     assert str(ROOT_PATH) != ""
     assert type(bucket_name) == str
-    assert type(file_name) == str
     assert bucket_name !=""
-    assert file_name !=""
 
     bucket_abs_path = ROOT_PATH / bucket_name 
     if not bucket_abs_path.exists():
@@ -193,7 +192,6 @@ def list_files_from_bucket(bucket_name):
                 path_string = child.__str__().rsplit("/")[-1]
                 output += path_string + "\n"
     except e:
-        print(e)
         output = "ERROR: files could not be listed in server!"
     finally:
         if output == "":
@@ -217,8 +215,6 @@ def main():
     logging.info(f"Accepting connections...")
     while True:
         c, addr = s.accept()
-        print(c)
-        print(f"Client connected ip:<{addr}>")
         t = threading.Thread(target=read, args=(c,))
         t.start()
 
@@ -227,9 +223,9 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a BucketDrive server")
-    parser.add_argument("--port", type=int, choices=[i for i in range(1000, 65535)], default=7777, help="Port on which open the socket")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host on which the server will run")
-    parser.add_argument("--root", type=str, default="", help="Root directory in which the buckets will be managed")
+    parser.add_argument("--port", type=int, metavar="PORT", choices=[i for i in range(1000, 65534)], default=7777, help="Port on which open the socket. Should be between 1000 and 65535. Default is 7777")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host on which the server will run. Default is 127.0.0.1")
+    parser.add_argument("--root", type=str, default="", help="Root directory in which the buckets will be managed. Default is the actual directory")
     
     args = parser.parse_args()
     HOST = args.host
@@ -245,6 +241,7 @@ if __name__ == "__main__":
 
     if not ROOT_PATH.is_absolute():
         ROOT_PATH = pathlib.Path.cwd() / ROOT_PATH # make absolute path
+        ROOT_PATH.mkdir(exist_ok=True)
 
     logging.info(f"STARTED SERVER ON ROOT PATH {ROOT_PATH}, USING {HOST}:{PORT}")
 

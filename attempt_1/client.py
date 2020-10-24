@@ -153,7 +153,6 @@ class BucketShell(cmd.Cmd):
 
     def do_CREATE_BUCKET(self, arg):
         'Creates a bucket with a given name: CREATE_BUCKET bucketName'
-        print(arg)
         create_bucket(str(arg))
     def do_REMOVE_BUCKET(self, arg):
         'Deletes a bucket with a given name: REMOVE_BUCKET bucketName'
@@ -167,7 +166,7 @@ class BucketShell(cmd.Cmd):
         remove_file(split_args[0], split_args[1])
     def do_LIST_FILES_FROM_BUCKET(self, arg):
         'Lists all the files in a given bucket: LIST_FILES_FROM_BUCKET bucketName'
-        list_files(parse(arg))
+        list_files(str(arg))
     def do_UPLOAD_FILE(self, arg):
         'Uploads a local file to the server: UPLOAD_FILE filePath'
         forward(*parse(arg))
