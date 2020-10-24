@@ -42,7 +42,7 @@ def read(sock):
     elif rm.data["instruction_type"] == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
         output = remove_file_from_bucket(str(rm.data["bucket_name"]), str(rm.data["file_name"]))
     elif rm.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value:
-        pass
+        output = list_files(rm.data["bucket_name"])
     elif rm.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
         pass
     elif rm.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
