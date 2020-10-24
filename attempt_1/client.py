@@ -27,7 +27,34 @@ def download_file(s):
             print("File does not exist :(")
             main()
     s.close()
+"""
+def upload_file(s):
+    file_name = input("Filename? ->")
 
+    if file_name != "q":
+        if (os.path.isfile(file_name)):
+        with open(file_name, "rb") as f:
+            bytes_to_send = f.read()
+            s.sendall(bytes_to_send)
+    else:
+        s.send(b"ERR")
+    s.close()
+"""
+def create_bucket(s):
+    bucket_path = input("New bucket name? -> ")
+
+    s.sendall(bytes(bucket_path, "utf-8"))  
+
+def delete_bucket(s):
+    bucket_path = input("Name of the bucket you want to delete? -> ")
+
+    s.sendall(bytes(bucket_path, "utf-8"))  
+
+def list_buckets(s):
+    s.sendall(bytes("list", "utf-8"))  
+    list = s.recv(1024)
+    s.print(list)
+    
 def main():
     host = "127.0.0.1"
     port = 7777
@@ -36,7 +63,7 @@ def main():
     s.connect((host, port))
 
 
-    download_file(s)
+    list_buckets(s)
     
 if __name__ == "__main__":
     main()
