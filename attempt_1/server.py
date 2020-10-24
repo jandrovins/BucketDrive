@@ -29,28 +29,32 @@ def download_file(s):
 def read(sock):
     from time import sleep
     rm = ReceivedMessage()
-    rm.recv_buffer = sock.recv(1024)
+    rm.recv_buffer = sock.recv(8)
     rm.process_header()
     rm.recv_buffer += sock.recv(rm.payload_size)
     rm.process_payload()
     if rm.data["instruction_type"] == InstructionType.CREATE_BUCKET.value:
-        output = create_bucket(rm.data["bucket_path"])
+        output = create_bucket(rm.data["bucket_name"])
     elif rm.data["instruction_type"] == InstructionType.REMOVE_BUCKET.value:
-        output = remove_bucket(rm.data["bucket_path"])
+        output = remove_bucket(rm.data["bucket_name"])
     elif rm.data["instruction_type"] == InstructionType.LIST_BUCKETS.value:
-        output = list_buckets(rm.data["bucket_path"])
+        output = list_buckets()
     elif rm.data["instruction_type"] == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
+        pass
     elif rm.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value:
+        pass
     elif rm.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
+        pass
     elif rm.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
+        pass
     else:
         output = "ERROR: no instruction type was parsed correctly. Check your message"
 
     # No matter if succeded of an error occured, send response to client.
     data = {"response":output}
     response = SentMessage(data=data)
-    response_bytes = message.create_message()
-    sock.sendall(message_bytes)
+    response_bytes = response.create_message()
+    sock.sendall(response_bytes)
     
 
 def upload_file(s):
@@ -83,26 +87,30 @@ def create_bucket(bucket_name): # bucket_name can be of the form "some/thing/str
     global ROOT_PATH # absolute path to root path
     assert issubclass(type(ROOT_PATH), pathlib.Path)
     assert str(ROOT_PATH) != ""
-    assert str(bucket_name) == str
+    assert type(bucket_name) == str
     assert bucket_name != ""
     assert "/" not in bucket_name
 
     absolute_path = ROOT_PATH / bucket_name
+    print(f"--------AP: {absolute_path}, ROOT_PATH: {ROOT_PATH}, bucket_name: {bucket_name}")
+
     try:
         absolute_path.mkdir()
     except FileExistsError as e:
         return f"ERROR: The bucket {absolute_path} already exists"
+    except e:
+        print (e)
     finally:
         if absolute_path.exists(): # was created succesfully
             return f"SUCCESS: Success creating bucket '{bucket_name}'"
         else:
-            return f"ERROR: The bucket '{path}' could not be created in server"
+            return f"ERROR: The bucket '{bucket_name}' could not be created in server"
 
 def remove_bucket(bucket_name): # bucket_name can be of the form "some/thing/strange"
     global ROOT_PATH # absolute path to root path
     assert issubclass(type(ROOT_PATH), pathlib.Path)
     assert str(ROOT_PATH) != ""
-    assert str(bucket_name) == str
+    assert type(bucket_name) == str
     assert bucket_name != ""
     assert "/" not in bucket_name 
 
@@ -110,7 +118,7 @@ def remove_bucket(bucket_name): # bucket_name can be of the form "some/thing/str
     try:
         shutil.rmtree(absolute_path.__str__())
     except FileNotFoundError as e:
-        return f"ERROR: The bucket {path} does not exist\b\t{e}"
+        return f"ERROR: The bucket {bucket_name} does not exist\b\t{e}"
     finally:
         if not absolute_path.exists(): # was removed succesfully
             return f"SUCCESS: Success removing bucket '{bucket_name}'"
@@ -119,15 +127,18 @@ def remove_bucket(bucket_name): # bucket_name can be of the form "some/thing/str
 
 def list_buckets():
     global ROOT_PATH
+    print(ROOT_PATH)
     assert issubclass(type(ROOT_PATH), pathlib.Path)
     assert str(ROOT_PATH) != ""
     output = "" # string to send to client
+    
     try:
-        for child in ROOT_PATH.iterdirs():
+        for child in ROOT_PATH.iterdir():
             if child.is_dir():
                 path_string = child.__str__().rsplit("/")[-1]
-                output += child_path + "\n"
-    except:
+                output += path_string + "\n"
+    except e:
+        print(e)
         output = "ERROR: buckets could not be listed in server!"
     finally:
         if output == "":
@@ -155,5 +166,8 @@ def main():
 
     s.close()
 
+
 if __name__ == "__main__":
+
+    ROOT_PATH = pathlib.Path(sys.argv[1])
     main()

@@ -58,7 +58,7 @@ class ReceivedMessage:
         tiow.close()
         return obj
 
-    def process_payload(self):
+    def process_payload(self, is_response = False):
         assert self.payload_size != None
         assert self.data == None
         header_len = self.payload_size # we must have read the header
@@ -66,6 +66,11 @@ class ReceivedMessage:
             self.payload =  self.json_decode(self.recv_buffer[:header_len], "utf-8")
             self.recv_buffer[header_len:]
             self.data = {}
+
+            if is_response:
+                self.data["response"] = self.payload["response"]
+                return
+            
             params = ["instruction_type"]
 
             number_of_params_received = 0

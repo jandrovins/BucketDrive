@@ -43,6 +43,13 @@ def upload_file(s):
         s.send(b"ERR")
     s.close()
 """
+def recv_response(sock):
+    rm = ReceivedMessage()
+    rm.recv_buffer = sock.recv(8)
+    rm.process_header()
+    rm.recv_buffer += sock.recv(rm.payload_size)
+    rm.process_payload(is_response = True)
+    print(rm.data["response"])
 
 def create_bucket(bucket_name):
     global HOST
@@ -57,11 +64,38 @@ def create_bucket(bucket_name):
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
+    recv_response(s)
+    
+def remove_bucket(bucket_name):
+    global HOST
+    global PORT
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
-def delete_bucket(s):
-    bucket_path = input("Name of the bucket you want to delete? -> ")
+    data = { "instruction_type": str(InstructionType.REMOVE_BUCKET.value),
+             "bucket_name": bucket_name}
+    message = SentMessage(data=data)
+    message_bytes = message.create_message()
+    s.sendall(message_bytes)
 
-    s.sendall(bytes(bucket_path, "utf-8"))  
+    recv_response(s)
+
+        
+def list_buckets():
+    global HOST
+    global PORT
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+
+    data = { "instruction_type": str(InstructionType.LIST_BUCKETS.value),}
+    message = SentMessage(data=data)
+    message_bytes = message.create_message()
+    s.sendall(message_bytes)
+
+    recv_response(s)
+
 
 #def list_buckets(s):
 #    s.sendall(bytes("list", "utf-8"))  
@@ -80,10 +114,10 @@ class BucketShell(cmd.Cmd):
         create_bucket(str(arg))
     def do_REMOVE_BUCKET(self, arg):
         'Deletes a bucket with a given name: REMOVE_BUCKET bucketName'
-        forward(*parse(arg))
+        remove_bucket(str(arg))
     def do_LIST_BUCKETS(self, arg):
         'Lists all the buckets in the working directory: LIST_BUCKETS'
-        forward(*parse(arg))
+        list_buckets()
     def do_REMOVE_FILE_FROM_BUCKET(self, arg):
         'Removes a file from a bucket: REMOVE_FILE_FROM_BUCKET filePath'
         forward(*parse(arg))
