@@ -110,6 +110,38 @@ def list_files(bucket_name):
     s.sendall(message_bytes)
 
     recv_response(s)
+
+def remove_bucket(bucket_name):
+
+    global HOST
+    global PORT
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+
+    data = { "instruction_type": str(InstructionType.REMOVE_BUCKET.value),
+             "bucket_name": bucket_name}
+    message = SentMessage(data=data)
+    message_bytes = message.create_message()
+    s.sendall(message_bytes)
+
+    recv_response(s)
+
+def remove_file(bucket_name, file_name):
+    global HOST
+    global PORT
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+
+    data = { "instruction_type": str(InstructionType.REMOVE_FILE_FROM_BUCKET.value),
+             "bucket_name": bucket_name,
+             "file_name": file_name}
+    message = SentMessage(data=data)
+    message_bytes = message.create_message()
+    s.sendall(message_bytes)
+
+    recv_response(s)
     
     
 class BucketShell(cmd.Cmd):
@@ -121,6 +153,7 @@ class BucketShell(cmd.Cmd):
 
     def do_CREATE_BUCKET(self, arg):
         'Creates a bucket with a given name: CREATE_BUCKET bucketName'
+        print(arg)
         create_bucket(str(arg))
     def do_REMOVE_BUCKET(self, arg):
         'Deletes a bucket with a given name: REMOVE_BUCKET bucketName'
@@ -129,22 +162,22 @@ class BucketShell(cmd.Cmd):
         'Lists all the buckets in the working directory: LIST_BUCKETS'
         list_buckets()
     def do_REMOVE_FILE_FROM_BUCKET(self, arg):
-        'Removes a file from a bucket: REMOVE_FILE_FROM_BUCKET filePath'
-        remove_file(str(arg))
+        'Removes a file from a bucket: REMOVE_FILE_FROM_BUCKET bucketName fileName'
+        split_args = arg.split()
+        remove_file(split_args[0], split_args[1])
     def do_LIST_FILES_FROM_BUCKET(self, arg):
         'Lists all the files in a given bucket: LIST_FILES_FROM_BUCKET bucketName'
-        list_files(str(arg))
+        list_files(parse(arg))
     def do_UPLOAD_FILE(self, arg):
         'Uploads a local file to the server: UPLOAD_FILE filePath'
         forward(*parse(arg))
     def do_DOWNLOAD_FILE(self, arg):
         'Downloads a file from the server to your computer: DOWNLOAD_FILE filePath'
-        forward(*parse(arg))
+        download_file(str(arg))
     def do_bye(self, arg):
         'Stop recording, close the turtle window, and exit:  BYE'
         print('Bye bye!')
         self.close()
-        #bye()
         return True
 
     def close(self):
@@ -154,7 +187,7 @@ class BucketShell(cmd.Cmd):
 
 def parse(arg):
     'Convert a series of zero or more numbers to an argument tuple'
-    return tuple(map(str, arg.split()))
+    return tuple(str(arg.split()))
 
 def main():
     global HOST
