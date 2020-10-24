@@ -2,7 +2,7 @@ import socket
 import threading
 import os
 
-def retrieve_file(s):
+def download_file(s):
     file_name = s.recv(1024)
     if (os.path.isfile(file_name)):
         msg = "EXISTS" + str(os.path.getsize(file_name))
@@ -34,7 +34,7 @@ def main():
         c, addr = s.accept()
         print(c)
         print(f"Client connected ip:<{addr}>")
-        t = threading.Thread(target=retrieve_file, args=(c,))
+        t = threading.Thread(target=download_file, args=(c,))
         t.start()
 
     s.close()
