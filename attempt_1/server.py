@@ -1,9 +1,10 @@
 import socket
 import threading
 import os
-from pathlib import Path
+import pathlib
 import shutil
 from shutil import rmtree
+from message import *
 
 def download_file(s):
     file_name = s.recv(1024)
@@ -23,8 +24,24 @@ def download_file(s):
         s.send(b"ERR")
     s.close()
 
+def read(sock):
+    from time import sleep
+    rm = ReceivedMessage()
+    rm.recv_buffer = sock.recv(1024)
+    rm.process_header()
+    rm.recv_buffer += sock.recv(rm.payload_size)
+    rm.process_payload()
+    if rm.data["instruction_type"] == InstructionType.CREATE_BUCKET.value:
+        output = create_bucket(rm.data["bucket_path"])
+    elif rm.data["instruction_type"] == InstructionType.REMOVE_BUCKET.value:
+    elif rm.data["instruction_type"] == InstructionType.LIST_BUCKETS.value:
+    elif rm.data["instruction_type"] == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
+    elif rm.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value:
+    elif rm.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
+    elif rm.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
+    
+
 def upload_file(s):
-   
     if file_name != "q":
         s.send(bytes(file_name, "utf-8"))
         data = s.recv(1024)
@@ -50,17 +67,25 @@ def upload_file(s):
             main()
     s.close()
 
-def create_bucket(s):
-    path = Path(s.recv(1024).decode("utf-8") )
-    path.mkdir(parents = True)
+def create_bucket(bucket_name): # bucket_name can be of the form "some/thing/strange"
+    assert str(bucket_name) == str
+    assert path != ""
+    path = pathlib.Path(path)
+    try:
+        path.mkdir(parents = True)
+    except FileExistsError as e:
+        return f"ERROR: The bucket {path} already exists"
+    return f"SUCCESS: Success creating bucket in {path}"
 
-def delete_bucket(s):
-    path = Path(s.recv(1024).decode("utf-8") )
+def delete_bucket(path):
+    path = Path(path)
     shutil.rmtree(str(path))
 
 def list_buckets(s):
     list = os.system("tree -d")
     s.sendall(bytes(list, "utf-8"))
+
+
 
 def main():
     host = "127.0.0.1"
@@ -76,7 +101,7 @@ def main():
         c, addr = s.accept()
         print(c)
         print(f"Client connected ip:<{addr}>")
-        t = threading.Thread(target=list_buckets, args=(c,))
+        t = threading.Thread(target=read, args=(c,))
         t.start()
 
     s.close()

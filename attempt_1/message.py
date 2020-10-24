@@ -1,5 +1,7 @@
 from enum import Enum
 import struct
+import json
+import io
 
 class InstructionType(Enum):
     CREATE_BUCKET           = 1
@@ -11,14 +13,9 @@ class InstructionType(Enum):
     DOWNLOAD_FILE           = 7
 
 class SentMessage:
-    def __init__(self, content="", instruction_type=None, file_path=None, data=None, sock=None, send_buffer=None):
+    def __init__(self, content="", data=None, send_buffer=None):
         self.content            = content
-        self.instruction_type   = instruction_type
-        if file_path:
-            assert type(file_path) == str
-            self.file_dir,self.file_name=rsplit(file_path, "/")
         self.data               = data
-        self.sock               = sock
         self.send_buffer        = send_buffer
 
     def create_header(self):
@@ -27,7 +24,7 @@ class SentMessage:
         return self.header_bytes
 
     def create_payload(self): 
-        assert data != None
+        assert self.data != None
         self.payload_bytes = json.dumps(self.data).encode("utf-8")
         self.payload_size = struct.pack(">Q", len(self.payload_bytes))
         return self.payload_bytes
@@ -41,12 +38,10 @@ class SentMessage:
         return self.send_buffer
 
 class ReceivedMessage:
-    def __init__(self, message_bytes):
+    def __init__(self):
         self.recv_buffer = b"" # bytes received in the server
         self.payload_size = None
         self.data = None
-        self.process_header()
-        self.process_payload()
 
     def process_header(self):
         header_len = 8 # since we are using unsigned long long
@@ -77,42 +72,37 @@ class ReceivedMessage:
             number_of_params_received = 0
             number_of_params_for_instruction = None
             for param in params:
-                self.data[param] = int(self.payload[param])
+                number_of_params_received +=1
+                value = self.payload[param]
                 if param == "instruction_type":
-                    if self.data["instruction_type"] == InstructionType.CREATE_BUCKET.value:
+                    value = int(value)
+                self.data[param] = self.payload[param]
+                if param == "instruction_type":
+                    self.data[param] = value
+                    if value == InstructionType.CREATE_BUCKET.value:
                         number_of_params_for_instruction = 2
-                        params.append(
-                                ["bucket_path", ]
-                                )
-                    elif self.data["instruction_type"] == InstructionType.REMOVE_BUCKET.value:
+                        params.append("bucket_path")
+                    elif value == InstructionType.REMOVE_BUCKET.value:
                         number_of_params_for_instruction = 2
-                        params.append(
-                                ["bucket_path", ]
-                                )
-                    elif self.data["instruction_type"] == InstructionType.LIST_BUCKETS.value:
+                        params.append("bucket_path")
+                    elif value == InstructionType.LIST_BUCKETS.value:
                         number_of_params_for_instruction = 1
                         pass
-                    elif self.data["instruction_type"] == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
+                    elif value == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
                         number_of_params_for_instruction = 3
-                        params.append(
-                                ["file_name", "bucket_path"]
-                                )
-                    elif self.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value3
+                        params.append("file_name")
+                        params.append("bucket_path")
+                    elif value == InstructionType.LIST_FILES_FROM_BUCKET.value:
                         number_of_params_for_instruction = 2
-                        params.append(
-                                ["bucket_path"]
-                                )
-                    elif self.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
+                        params.append("bucket_path")
+                    elif value == InstructionType.UPLOAD_FILE.value:
                         number_of_params_for_instruction = 2
-                        params.append(
-                                ["name", ]
-                                )
-                    elif self.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
+                        params.append("name")
+                    elif value == InstructionType.DOWNLOAD_FILE.value:
                         number_of_params_for_instruction = 3
-                        params.append(
-                                ["file_name", "bucket_path"]
-                                )
-                assert number_of_params_received == number_of_params_for_instruction, "There was an error in the json received!"
+                        params.append("file_name")
+                        params.append("bucket_path")
+            assert number_of_params_received == number_of_params_for_instruction, "There was an error in the json received!"
 
 
      

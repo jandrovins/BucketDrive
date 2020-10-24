@@ -1,4 +1,5 @@
 import socket
+from message import *
 
 def download_file(s):
     file_name = input("Filename? ->")
@@ -40,20 +41,25 @@ def upload_file(s):
         s.send(b"ERR")
     s.close()
 """
+
 def create_bucket(s):
     bucket_path = input("New bucket name? -> ")
+    data = { "instruction_type": str(InstructionType.CREATE_BUCKET.value),
+            "bucket_path": bucket_path}
+    message = SentMessage(data=data)
+    message_bytes = message.create_message()
+    s.sendall(message_bytes)
 
-    s.sendall(bytes(bucket_path, "utf-8"))  
 
 def delete_bucket(s):
     bucket_path = input("Name of the bucket you want to delete? -> ")
 
     s.sendall(bytes(bucket_path, "utf-8"))  
 
-def list_buckets(s):
-    s.sendall(bytes("list", "utf-8"))  
-    list = s.recv(1024)
-    s.print(list)
+#def list_buckets(s):
+#    s.sendall(bytes("list", "utf-8"))  
+#    list = s.recv(1024)
+#    s.print(list)
     
 def main():
     host = "127.0.0.1"
@@ -63,7 +69,7 @@ def main():
     s.connect((host, port))
 
 
-    list_buckets(s)
+    create_bucket(s)
     
 if __name__ == "__main__":
     main()
