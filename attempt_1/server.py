@@ -2,10 +2,11 @@ import socket
 import threading
 import os
 
-def retrieve_file(name, s):
+def retrieve_file(s):
     file_name = s.recv(1024)
     if (os.path.isfile(file_name)):
         msg = "EXISTS" + str(os.path.getsize(file_name))
+        print(str(os.path.getsize(file_name)))
         s.send(bytes(msg, "utf-8"))
         user_response = s.recv(1024)
         if (user_response[:2] == b"OK"):
@@ -33,7 +34,7 @@ def main():
         c, addr = s.accept()
         print(c)
         print(f"Client connected ip:<{addr}>")
-        t = threading.Thread(target=retrieve_file, args=("reciebe_thread", c))
+        t = threading.Thread(target=retrieve_file, args=(c,))
         t.start()
 
     s.close()
