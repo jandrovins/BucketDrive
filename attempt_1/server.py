@@ -40,7 +40,7 @@ def read(sock):
     elif rm.data["instruction_type"] == InstructionType.LIST_BUCKETS.value:
         output = list_buckets()
     elif rm.data["instruction_type"] == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
-        pass
+        output = remove_file_from_bucket(str(rm.data["bucket_name"]), str(rm.data["file_name"]))
     elif rm.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value:
         pass
     elif rm.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
@@ -127,7 +127,6 @@ def remove_bucket(bucket_name): # bucket_name can be of the form "some/thing/str
 
 def list_buckets():
     global ROOT_PATH
-    print(ROOT_PATH)
     assert issubclass(type(ROOT_PATH), pathlib.Path)
     assert str(ROOT_PATH) != ""
     output = "" # string to send to client
@@ -145,7 +144,31 @@ def list_buckets():
             output = "There are no buckets yet!"
         return output
 
+def remove_file_from_bucket(bucket_name, file_name):
+    global ROOT_PATH
+    assert issubclass(type(ROOT_PATH), pathlib.Path)
+    assert str(ROOT_PATH) != ""
+    assert type(bucket_name) == str
+    assert type(file_name) == str
+    assert bucket_name !=""
+    assert file_name !=""
 
+    output = ""
+    bucket_abs_path = ROOT_PATH / bucket_name 
+    if not bucket_abs_path.exists():
+        return "ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
+    file_abs_path = bucket_abs_path / bucket_name 
+    try:
+        file_abs_path.unlink()
+
+    except FileNotFoundError as e:
+        output = "ERROR: File {file_name} not found on bucket {bucket_name}"
+    except:
+        output = "ERROR: File {file_name} could not be removed from {bucket_name}"
+    finally:
+        if output == ""
+            output = "SUCCESS: File {file_name} has been removed from {bucket_name}"
+        return output
 
 def main():
     host = "127.0.0.1"
@@ -168,6 +191,7 @@ def main():
 
 
 if __name__ == "__main__":
-
     ROOT_PATH = pathlib.Path(sys.argv[1])
+    if not ROOT_PATH.is_absolute():
+        ROOT_PATH = pathlib.Path.cwd() / ROOT_PATH # make absolute path
     main()
