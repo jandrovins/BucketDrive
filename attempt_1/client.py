@@ -1,9 +1,30 @@
+#!/usr/bin/env python
 import socket
 from message import *
 import cmd
 import sys
+import logging
+import argparse
 
-def download_file(s):
+def download_file(bucket_name, file_name):
+    global HOST
+    global PORT
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+
+    data = { "instruction_type": str(InstructionType.DOWNLOAD_FILE.value),
+             "bucket_name": bucket_name,
+             "file_name": file_name,}
+    message = SentMessage(data=data)
+    message_bytes = message.create_message()
+    s.sendall(message_bytes)
+
+    response = recv_response(s)
+    
+    f = open("new_"+file_name, "wb")
+    f.write(response)
+    """
     file_name = input("Filename? ->")
 
     if file_name != "q":
@@ -29,7 +50,7 @@ def download_file(s):
         else:
             print("File does not exist :(")
             main()
-    s.close()
+    s.close()"""
 """
 def upload_file(s):
     file_name = input("Filename? ->")
@@ -142,10 +163,11 @@ def remove_file(bucket_name, file_name):
     s.sendall(message_bytes)
 
     recv_response(s)
+
     
     
 class BucketShell(cmd.Cmd):
-    intro = "Welcome to Bucket Drive! \n Type ? to see commands. \n Type bye to leave."
+    intro = "Welcome to Bucket Drive! \n Type ? or help to see commands. \n Type help COMMAND_NAME to see further information about the command. \n Type bye to leave."
     prompt = "-> "
     file = None
     
@@ -172,7 +194,8 @@ class BucketShell(cmd.Cmd):
         forward(*parse(arg))
     def do_DOWNLOAD_FILE(self, arg):
         'Downloads a file from the server to your computer: DOWNLOAD_FILE filePath'
-        download_file(str(arg))
+        split_args = arg.split()
+        download_file(split_args[0], split_args[1])
     def do_bye(self, arg):
         'Stop recording, close the turtle window, and exit:  BYE'
         print('Bye bye!')
@@ -184,26 +207,36 @@ class BucketShell(cmd.Cmd):
             self.file.close()
             self.file = None
 
-def parse(arg):
-    'Convert a series of zero or more numbers to an argument tuple'
-    return tuple(str(arg.split()))
-
 def main():
     global HOST
     global PORT
     
-    HOST = str(sys.argv[1])
-    print(HOST)
-    assert HOST != None
-    PORT = int(sys.argv[2])
-    assert PORT != None
-    
     shell = BucketShell()
-    shell.cmdloop()
 
+    try:
+        shell.cmdloop()
+    except:
+        print("Sorry, we were not expecting that.")
+        shell.onecmd()
 
 if __name__ == "__main__":
-    HOST = None
-    PORT = None
+    # Manejo de parametros
+    parser = argparse.ArgumentParser(description="Create a BucketDrive client")
+    parser.add_argument("--port", type=int, metavar="PORT", choices=[i for i in range(1000, 65534)], default = 7777, help="Port on which the client will open sockets. Should be a number between 1000 and 65535. Default is 7777")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host on which the client will run. Default is 127.0.0.1")
 
+    args = parser.parse_args()
+
+    HOST = args.host
+    PORT = args.port
+
+    logging.basicConfig(filename="Client.log",
+        filemode="a",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s", 
+        datefmt='%m/%d/%Y %I:%M:%S %p'
+        )
+
+    logging.info(f"STARTED CLIENT USING {HOST}:{PORT}")
+    
     main()
