@@ -1,5 +1,7 @@
 import socket
 from message import *
+import cmd
+import sys
 
 def download_file(s):
     file_name = input("Filename? ->")
@@ -42,10 +44,15 @@ def upload_file(s):
     s.close()
 """
 
-def create_bucket(s):
-    bucket_path = input("New bucket name? -> ")
+def create_bucket(bucket_name):
+    global HOST
+    global PORT
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+
     data = { "instruction_type": str(InstructionType.CREATE_BUCKET.value),
-            "bucket_path": bucket_path}
+             "bucket_name": bucket_name}
     message = SentMessage(data=data)
     message_bytes = message.create_message()
     s.sendall(message_bytes)
@@ -60,16 +67,67 @@ def delete_bucket(s):
 #    s.sendall(bytes("list", "utf-8"))  
 #    list = s.recv(1024)
 #    s.print(list)
+
+class BucketShell(cmd.Cmd):
+    intro = "Welcome to Bucket Drive! \n Type ? to see commands. \n Type bye to leave."
+    prompt = "-> "
+    file = None
     
+    # Basic Bucket Drive commands
+
+    def do_CREATE_BUCKET(self, arg):
+        'Creates a bucket with a given name: CREATE_BUCKET bucketName'
+        create_bucket(str(arg))
+    def do_REMOVE_BUCKET(self, arg):
+        'Deletes a bucket with a given name: REMOVE_BUCKET bucketName'
+        forward(*parse(arg))
+    def do_LIST_BUCKETS(self, arg):
+        'Lists all the buckets in the working directory: LIST_BUCKETS'
+        forward(*parse(arg))
+    def do_REMOVE_FILE_FROM_BUCKET(self, arg):
+        'Removes a file from a bucket: REMOVE_FILE_FROM_BUCKET filePath'
+        forward(*parse(arg))
+    def do_LIST_FILES_FOM_BUCKET(self, arg):
+        'Lists all the files in a given bucket: LIST_FILES_FROM_BUCKET bucketName'
+        forward(*parse(arg))
+    def do_UPLOAD_FILE(self, arg):
+        'Uploads a local file to the server: UPLOAD_FILE filePath'
+        forward(*parse(arg))
+    def do_DOWNLOAD_FILE(self, arg):
+        'Downloads a file from the server to your computer: DOWNLOAD_FILE filePath'
+        forward(*parse(arg))
+    def do_bye(self, arg):
+        'Stop recording, close the turtle window, and exit:  BYE'
+        print('Bye bye!')
+        self.close()
+        #bye()
+        return True
+
+    def close(self):
+        if self.file:
+            self.file.close()
+            self.file = None
+
+def parse(arg):
+    'Convert a series of zero or more numbers to an argument tuple'
+    return tuple(map(str, arg.split()))
+
 def main():
-    host = "127.0.0.1"
-    port = 7777
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
-
-
-    create_bucket(s)
+    global HOST
+    global PORT
     
+    HOST = str(sys.argv[1])
+    print(HOST)
+    assert HOST != None
+    PORT = int(sys.argv[2])
+    assert PORT != None
+    
+    shell = BucketShell()
+    shell.cmdloop()
+
+
 if __name__ == "__main__":
+    HOST = None
+    PORT = None
+
     main()

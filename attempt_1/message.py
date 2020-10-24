@@ -81,27 +81,27 @@ class ReceivedMessage:
                     self.data[param] = value
                     if value == InstructionType.CREATE_BUCKET.value:
                         number_of_params_for_instruction = 2
-                        params.append("bucket_path")
+                        params.append("bucket_name")
                     elif value == InstructionType.REMOVE_BUCKET.value:
                         number_of_params_for_instruction = 2
-                        params.append("bucket_path")
+                        params.append("bucket_name")
                     elif value == InstructionType.LIST_BUCKETS.value:
                         number_of_params_for_instruction = 1
                         pass
                     elif value == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
                         number_of_params_for_instruction = 3
                         params.append("file_name")
-                        params.append("bucket_path")
+                        params.append("bucket_name")
                     elif value == InstructionType.LIST_FILES_FROM_BUCKET.value:
                         number_of_params_for_instruction = 2
-                        params.append("bucket_path")
+                        params.append("bucket_name")
                     elif value == InstructionType.UPLOAD_FILE.value:
                         number_of_params_for_instruction = 2
                         params.append("name")
                     elif value == InstructionType.DOWNLOAD_FILE.value:
                         number_of_params_for_instruction = 3
                         params.append("file_name")
-                        params.append("bucket_path")
+                        params.append("bucket_name")
             assert number_of_params_received == number_of_params_for_instruction, "There was an error in the json received!"
 
 
