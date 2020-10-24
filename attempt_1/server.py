@@ -4,9 +4,9 @@ import os
 import pathlib
 import shutil
 import sys
+import logging
+import argparse
 from message import *
-
-ROOT_PATH=None
 
 def download_file(s):
     file_name = s.recv(1024)
@@ -27,19 +27,22 @@ def download_file(s):
     s.close()
 
 def read(sock):
-    from time import sleep
     rm = ReceivedMessage()
     rm.recv_buffer = sock.recv(8)
     rm.process_header()
     rm.recv_buffer += sock.recv(rm.payload_size)
     rm.process_payload()
     if rm.data["instruction_type"] == InstructionType.CREATE_BUCKET.value:
-        output = create_bucket(rm.data["bucket_name"])
+        bucket_name = rm.data["bucket_name"]
+        output = create_bucket(bucket_name)
     elif rm.data["instruction_type"] == InstructionType.REMOVE_BUCKET.value:
-        output = remove_bucket(rm.data["bucket_name"])
+        bucket_name = rm.data["bucket_name"]
+        output = remove_bucket(bucket_name)
     elif rm.data["instruction_type"] == InstructionType.LIST_BUCKETS.value:
         output = list_buckets()
     elif rm.data["instruction_type"] == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
+        bucket_name = rm.data["bucket_name"]
+        file_name = rm.data["file_name"]
         output = remove_file_from_bucket(str(rm.data["bucket_name"]), str(rm.data["file_name"]))
     elif rm.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value:
         output = list_files(rm.data["bucket_name"])
@@ -198,15 +201,20 @@ def list_files_from_bucket(bucket_name):
         return output
 
 def main():
-    host = "127.0.0.1"
-    port = 7777
+    global HOST
+    global PORT
 
+    logging.debug(f"Creating socket")
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((host, port))
-    s.listen(5)
+    logging.info(f"Binding socket to {HOST}:{PORT}")
+    s.bind((HOST, PORT))
+    backlog = 5 
+    logging.info(f"Socket listening with backlog={backlog}")
+    s.listen(backlog)
 
-    print("Server started!")
+    print(f"Listening on {HOST}:{PORT}")
 
+    logging.info(f"Accepting connections...")
     while True:
         c, addr = s.accept()
         print(c)
@@ -218,7 +226,26 @@ def main():
 
 
 if __name__ == "__main__":
-    ROOT_PATH = pathlib.Path(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Create a BucketDrive server")
+    parser.add_argument("--port", type=int, choices=[i for i in range(1000, 65535)], default=7777, help="Port on which open the socket")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host on which the server will run")
+    parser.add_argument("--root", type=str, default="", help="Root directory in which the buckets will be managed")
+    
+    args = parser.parse_args()
+    HOST = args.host
+    PORT = args.port
+    ROOT_PATH = pathlib.Path(args.root)
+    # Configure logging
+    logging.basicConfig(filename="Server.log",
+            filemode="a",
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s", 
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+            )
+
     if not ROOT_PATH.is_absolute():
         ROOT_PATH = pathlib.Path.cwd() / ROOT_PATH # make absolute path
+
+    logging.info(f"STARTED SERVER ON ROOT PATH {ROOT_PATH}, USING {HOST}:{PORT}")
+
     main()
