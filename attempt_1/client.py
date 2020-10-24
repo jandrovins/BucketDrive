@@ -96,12 +96,22 @@ def list_buckets():
 
     recv_response(s)
 
+def list_files(bucket_name):
+    global HOST
+    global PORT
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
-#def list_buckets(s):
-#    s.sendall(bytes("list", "utf-8"))  
-#    list = s.recv(1024)
-#    s.print(list)
+    data = { "instruction_type": str(InstructionType.LIST_FILES_FROM_BUCKET.value),
+             "bucket_name": bucket_name}
+    message = SentMessage(data=data)
+    message_bytes = message.create_message()
+    s.sendall(message_bytes)
 
+    recv_response(s)
+    
+    
 class BucketShell(cmd.Cmd):
     intro = "Welcome to Bucket Drive! \n Type ? to see commands. \n Type bye to leave."
     prompt = "-> "
@@ -120,10 +130,10 @@ class BucketShell(cmd.Cmd):
         list_buckets()
     def do_REMOVE_FILE_FROM_BUCKET(self, arg):
         'Removes a file from a bucket: REMOVE_FILE_FROM_BUCKET filePath'
-        forward(*parse(arg))
-    def do_LIST_FILES_FOM_BUCKET(self, arg):
+        remove_file(str(arg))
+    def do_LIST_FILES_FROM_BUCKET(self, arg):
         'Lists all the files in a given bucket: LIST_FILES_FROM_BUCKET bucketName'
-        forward(*parse(arg))
+        list_files(str(arg))
     def do_UPLOAD_FILE(self, arg):
         'Uploads a local file to the server: UPLOAD_FILE filePath'
         forward(*parse(arg))

@@ -42,7 +42,7 @@ def read(sock):
     elif rm.data["instruction_type"] == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
         pass
     elif rm.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value:
-        pass
+        output = list_files(rm.data["bucket_name"])
     elif rm.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
         pass
     elif rm.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
@@ -127,7 +127,6 @@ def remove_bucket(bucket_name): # bucket_name can be of the form "some/thing/str
 
 def list_buckets():
     global ROOT_PATH
-    print(ROOT_PATH)
     assert issubclass(type(ROOT_PATH), pathlib.Path)
     assert str(ROOT_PATH) != ""
     output = "" # string to send to client
@@ -145,8 +144,27 @@ def list_buckets():
             output = "There are no buckets yet!"
         return output
 
+def list_files(bucket_name):
+    global ROOT_PATH
+    assert issubclass(type(ROOT_PATH), pathlib.Path)
+    assert str(ROOT_PATH) != ""
+    assert type(bucket_name) == str
+    assert bucket_name != ""
+    assert "/" not in bucket_name
 
-
+    absolute_path = ROOT_PATH / bucket_name
+    output = "" # String to send to clinet
+    
+    try:
+        file_list = sorted(absolute_path.glob('*.*'))
+        for f in file_list:
+            output += str(f).__str__().rsplit("/")[-1] + "\n"
+    finally:
+        if output == "":
+            output = "There are no buckets yet!"
+        return output
+        
+    
 def main():
     host = "127.0.0.1"
     port = 7777
