@@ -141,7 +141,7 @@ def list_buckets():
         output = "ERROR: buckets could not be listed in server!"
     finally:
         if output == "":
-            output = "There are no buckets yet!"
+            output = "SUCCESS: There are no buckets yet!"
         return output
 
 def remove_file_from_bucket(bucket_name, file_name):
@@ -168,6 +168,33 @@ def remove_file_from_bucket(bucket_name, file_name):
     finally:
         if output == "":
             output = f"SUCCESS: File {file_name} has been removed from {bucket_name}"
+        return output
+
+def list_files_from_bucket(bucket_name):
+    global ROOT_PATH
+    assert issubclass(type(ROOT_PATH), pathlib.Path)
+    assert str(ROOT_PATH) != ""
+    assert type(bucket_name) == str
+    assert type(file_name) == str
+    assert bucket_name !=""
+    assert file_name !=""
+
+    bucket_abs_path = ROOT_PATH / bucket_name 
+    if not bucket_abs_path.exists():
+        return "ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
+
+    output = ""
+    try:
+        for child in bucket_abs_path.iterdir():
+            if child.is_file():
+                path_string = child.__str__().rsplit("/")[-1]
+                output += path_string + "\n"
+    except e:
+        print(e)
+        output = "ERROR: files could not be listed in server!"
+    finally:
+        if output == "":
+            output = "SUCCESS: There are no files inside '{bucket_name}' yet!"
         return output
 
 def main():
