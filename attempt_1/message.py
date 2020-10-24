@@ -13,10 +13,9 @@ class InstructionType(Enum):
     DOWNLOAD_FILE           = 7
 
 class SentMessage:
-    def __init__(self, content="", data=None, send_buffer=None):
-        self.content            = content
+    def __init__(self, data=None):
         self.data               = data
-        self.send_buffer        = send_buffer
+        self.send_buffer        = None
 
     def create_header(self):
         assert self.payload_size != None
