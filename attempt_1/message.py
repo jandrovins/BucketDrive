@@ -94,8 +94,8 @@ class ReceivedMessage:
                         pass
                     elif value == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
                         number_of_params_for_instruction = 3
-                        params.append("file_name")
                         params.append("bucket_name")
+                        params.append("file_name")
                     elif value == InstructionType.LIST_FILES_FROM_BUCKET.value:
                         number_of_params_for_instruction = 2
                         params.append("bucket_name")
@@ -104,8 +104,8 @@ class ReceivedMessage:
                         params.append("name")
                     elif value == InstructionType.DOWNLOAD_FILE.value:
                         number_of_params_for_instruction = 3
-                        params.append("file_name")
                         params.append("bucket_name")
+                        params.append("file_name")
             assert number_of_params_received == number_of_params_for_instruction, "There was an error in the json received!"
 
 

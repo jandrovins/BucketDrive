@@ -36,7 +36,7 @@ def read(sock):
     elif rm.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
         bucket_name = rm.data["bucket_name"]
         file_name = rm.data["file_name"]
-        output = download_file(str(rm.data["bucket_name"]), str(rm.data["file_name"]))
+        output = download_file(str(rm.data["bucket_name"]), str(rm.data["file_name"]), sock)
     else:
         output = "ERROR: no instruction type was parsed correctly. Check your message"
 
@@ -183,7 +183,7 @@ def list_files(bucket_name):
             output = "SUCCESS: There are no files inside '{bucket_name}' yet!"
         return output
 
-def download_file(bucket_name, file_name):
+def download_file(bucket_name, file_name, sock):
     global ROOT_PATH
     assert issubclass(type(ROOT_PATH), pathlib.Path)
     assert str(ROOT_PATH) != ""
@@ -192,22 +192,28 @@ def download_file(bucket_name, file_name):
     assert bucket_name !=""
     assert file_name !=""
 
-    
-    output = ""
-    bucket_abs_path = ROOT_PATH / bucket_name 
+    bucket_abs_path = ROOT_PATH / bucket_name
+    #print(bucket_abs_path)                                                                                                                                   
     if not bucket_abs_path.exists():
         return f"ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
-    file_abs_path = bucket_abs_path / file_name 
+    file_abs_path = bucket_abs_path / file_name
+    print(file_abs_path)
+    output = ""
 
-    output = b""
-    
-    if (os.path.isfile(str(file_abs_path))):
-        with open(file_name, "rb") as f:
-            output = f.read()
+    if file_abs_path.exists():
+        file_size = file_abs_path.stat().st_size
+        output = struct.pack(">Q", file_size)
+        sock.sendall(output)
+
+        with open(file_abs_path, "rb") as f:
+            bytes_to_send = f.read()
+            print(type(bytes_to_send))
+            sock.sendall(bytes_to_send)
+        output = "SUCCESS: The file has been downloaded."
         return output
     else:
         return f"ERROR: File {file_name} does not exist in given bucket"
-    
+ 
 def main():
     global HOST
     global PORT

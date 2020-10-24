@@ -9,7 +9,7 @@ import argparse
 def download_file(bucket_name, file_name):
     global HOST
     global PORT
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
 
@@ -20,10 +20,20 @@ def download_file(bucket_name, file_name):
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
-    response = recv_response(s)
-    
+    file_size = s.recv(8)
+    file_size = struct.unpack(">Q", file_size)[0]
+    total_size = file_size
+
     f = open("new_"+file_name, "wb")
-    f.write(response)
+    total_received = 0
+    while file_size != 0:
+        data = s.recv(4096)      
+        file_size -= len(data)
+        print("{0:.2f}".format(((total_size-file_size)/float(total_size))*100)+"% Downloaded.")
+        f.write(data)
+
+
+
     """
     file_name = input("Filename? ->")
 
@@ -217,8 +227,7 @@ def main():
         shell.cmdloop()
     except:
         print("Sorry, we were not expecting that.")
-        shell.onecmd()
-
+        
 if __name__ == "__main__":
     # Manejo de parametros
     parser = argparse.ArgumentParser(description="Create a BucketDrive client")
