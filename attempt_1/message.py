@@ -108,7 +108,16 @@ class ReceivedMessage:
                         params.append("file_name")
             assert number_of_params_received == number_of_params_for_instruction, "There was an error in the json received!"
 
-
+def read_message(rm, sock):
+    header_len = 8
+    rm.recv_buffer = sock.recv(1024)
+    while len(rm.recv_buffer) < header_len:
+        rm.recv_buffer += sock.recv(1024)
+    rm.process_header()
+    rm.recv_buffer = sock.recv(1024)
+    while len(rm.recv_buffer) < rm.process_header:
+        rm.recv_buffer += sock.recv(1024)
+    rm.process_payload()
      
 class SubClient:
     def __init__(self, message=None, host=None, port=None):

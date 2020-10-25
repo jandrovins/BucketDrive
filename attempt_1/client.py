@@ -20,12 +20,13 @@ def download_file(bucket_name, file_name):
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
-    file_size = s.recv(8)
-    file_size = struct.unpack(">Q", file_size)[0]
+    file_size_bstring = s.recv(1024)
+    while len(file_size_bstring) < 8:
+        file_size_bstring += s.recv(1024)
+    file_size = struct.unpack(">Q", file_size_bstring)[0]
     total_size = file_size
 
     f = open("new_"+file_name, "wb")
-    total_received = 0
     while file_size != 0:
         data = s.recv(4096)      
         file_size -= len(data)
@@ -76,10 +77,7 @@ def upload_file(s):
 """
 def recv_response(sock):
     rm = ReceivedMessage()
-    rm.recv_buffer = sock.recv(8)
-    rm.process_header()
-    rm.recv_buffer += sock.recv(rm.payload_size)
-    rm.process_payload(is_response = True)
+    read_message(rm, sock)
     print(rm.data["response"])
 
 def create_bucket(bucket_name):

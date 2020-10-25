@@ -9,13 +9,9 @@ import logging
 import argparse
 from message import *
 
-
 def read(sock):
     rm = ReceivedMessage()
-    rm.recv_buffer = sock.recv(8)
-    rm.process_header()
-    rm.recv_buffer += sock.recv(rm.payload_size)
-    rm.process_payload()
+    read_message(rm, sock)
     if rm.data["instruction_type"] == InstructionType.CREATE_BUCKET.value:
         bucket_name = rm.data["bucket_name"]
         output = create_bucket(bucket_name)
