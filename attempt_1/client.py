@@ -92,7 +92,6 @@ def upload_file(bucket_name, file_path):
 
         with open(file_path, "rb") as f:
             bytes_to_send = f.read()
-            print(type(bytes_to_send))
             s.sendall(bytes_to_send)
         output = "SUCCESS: The file has been downloaded."
         return output
@@ -105,7 +104,6 @@ def upload_file(bucket_name, file_path):
 def recv_response(sock):
     rm = ReceivedMessage(is_response=True)
     read_message(rm, sock)
-    print(rm.data["response"])
 
 def create_bucket(bucket_name):
     logging.basicConfig(filename="Client.log",
