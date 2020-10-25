@@ -101,8 +101,9 @@ class ReceivedMessage:
                         number_of_params_for_instruction = 2
                         params.append("bucket_name")
                     elif value == InstructionType.UPLOAD_FILE.value:
-                        number_of_params_for_instruction = 2
-                        params.append("name")
+                        number_of_params_for_instruction = 3
+                        params.append("bucket_name")
+                        params.append("file_name")
                     elif value == InstructionType.DOWNLOAD_FILE.value:
                         number_of_params_for_instruction = 3
                         params.append("bucket_name")
