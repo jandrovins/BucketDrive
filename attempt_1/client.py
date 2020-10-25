@@ -5,6 +5,16 @@ import cmd
 import sys
 import logging
 import argparse
+import threading
+import readline
+
+def create_socket():
+    global HOST
+    global PORT
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+    return s
+
 
 def download_file(bucket_name, file_name):
     logging.basicConfig(filename="Client.log",
@@ -16,10 +26,7 @@ def download_file(bucket_name, file_name):
 
     logging.info(f'Creating a DOWNLOAD_FILE request')
 
-    global HOST
-    global PORT
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    s = create_socket()
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -63,10 +70,7 @@ def upload_file(bucket_name, file_name):
 
     logging.info(f'Creating a UPLOAD_FILE request')
 
-    global HOST
-    global PORT
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    s = create_socket()
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -112,11 +116,7 @@ def create_bucket(bucket_name):
 
     logging.info(f'Creating a DOWNLOAD_FILE request')
 
-    global HOST
-    global PORT
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    s = create_socket()
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -143,11 +143,7 @@ def remove_bucket(bucket_name):
 
     logging.info(f'Creating a REMOVE_BUCKET request')
 
-    global HOST
-    global PORT
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    s = create_socket()
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -174,11 +170,7 @@ def list_buckets():
 
     logging.info(f'Creating a LIST_BUCKETS request')
 
-    global HOST
-    global PORT
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    s = create_socket()
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -201,13 +193,9 @@ def list_files(bucket_name):
         datefmt='%m/%d/%Y %I:%M:%S %p'
         )
 
-    loggin.info(f'Creating a LIST_FILES request')
+    logging.info(f'Creating a LIST_FILES request')
 
-    global HOST
-    global PORT
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    s = create_socket()
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -233,11 +221,7 @@ def remove_bucket(bucket_name):
 
     logging.info(f'Creating a REMOVE_BUCKET request')
 
-    global HOST
-    global PORT
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    s = create_socket()
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -261,13 +245,9 @@ def remove_file(bucket_name, file_name):
         datefmt='%m/%d/%Y %I:%M:%S %p'
         )
 
-    loggin.info(f'Creating a REMOVE FILE request')
+    logging.info(f'Creating a REMOVE FILE request')
 
-    global HOST
-    global PORT
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    s = create_socket()
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -286,11 +266,10 @@ def remove_file(bucket_name, file_name):
 
 class BucketShell(cmd.Cmd):
     intro = "Welcome to Bucket Drive! \n Type ? or help to see commands. \n Type help COMMAND_NAME to see further information about the command. \n Type bye to leave."
-    prompt = "-> "
+    prompt = "BucketDrive-> "
     file = None
     
     # Basic Bucket Drive commands
-
     def do_CREATE_BUCKET(self, arg):
         'Creates a bucket with a given name: CREATE_BUCKET bucketName'
         create_bucket(str(arg))
@@ -310,11 +289,13 @@ class BucketShell(cmd.Cmd):
     def do_UPLOAD_FILE(self, arg):
         'Uploads a local file to the server: UPLOAD_FILE bucketName fileName'
         split_args = arg.split()
-        upload_file(split_args[0], split_args[1])
+        t = threading.Thread(target=upload_file, args=(split_args[0], split_args[1]))
+        t.start()
     def do_DOWNLOAD_FILE(self, arg):
         'Downloads a file from the server to your computer: DOWNLOAD_FILE bucketName fileName'
         split_args = arg.split()
-        download_file(split_args[0], split_args[1])
+        t = threading.Thread(target=download_file, args=(split_args[0], split_args[1]))
+        t.start()
     def do_bye(self, arg):
         'Stop recording, close the turtle window, and exit:  BYE'
         print('Bye bye!')
@@ -327,9 +308,6 @@ class BucketShell(cmd.Cmd):
             self.file = None
 
 def main():
-    global HOST
-    global PORT
-    
     shell = BucketShell()
 
     try:
