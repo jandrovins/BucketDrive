@@ -28,7 +28,9 @@ def read(sock):
         bucket_name = rm.data["bucket_name"]
         output = list_files(bucket_name)
     elif rm.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
-        pass
+        bucket_name = rm.data["bucket_name"]
+        file_name = rm.data["file_name"]
+        output = download_file(str(rm.data["bucket_name"]), str(rm.data["file_name"]), sock)
     elif rm.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
         bucket_name = rm.data["bucket_name"]
         file_name = rm.data["file_name"]
@@ -43,32 +45,34 @@ def read(sock):
     sock.sendall(response_bytes)
     
 
-def upload_file(s):
-    if file_name != "q":
-        s.send(bytes(file_name, "utf-8"))
-        data = s.recv(1024)
-        #print(data)
-        if data[:6] == b"EXISTS":
-            file_size = float(data[6:])
-            message = input("The file exists, do you want to download it? (Y/N) ->")
-            if message == "Y":
-                s.send(b"OK")
-                file = open("new_"+file_name, "wb")
-                data = s.recv(1024)
-                total_recieved = len(data)
-                file.write(data)
-                while total_recieved < file_size:
-                    data = s.recv(1024)
-                    total_recieved += len(data)
-                    file.write(data)
-                    print("{0:.2f}".format((total_recieved/float(file_size))*100)+"% Downloaded.")
-                print("Download completed!")
-                main()
-        else:
-            print("File does not exist :(")
-            main()
-    s.close()
+def upload_file(bucket_name, file_name, sock):
+    assert issubclass(type(ROOT_PATH), pathlib.Path)
+    assert str(ROOT_PATH) != ""
+    assert type(bucket_name) == str
+    assert type(file_name) == str
+    assert bucket_name !=""
+    assert file_name !=""
 
+    if not bucket_abs_path.exists():
+        return f"ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
+    file_abs_path = bucket_abs_path / file_name
+    print(file_abs_path)
+    output = ""
+
+    file_size = s.recv(8)
+    file_size = struct.unpack(">Q", file_size)[0]
+    total_size = file_size
+
+    f = open("new_"+file_name, "wb")
+    total_received = 0
+    while file_size != 0:
+        data = s.recv(4096)      
+        file_size -= len(data)
+        print("{0:.2f}".format(((total_size-file_size)/float(total_size))*100)+"% Downloaded.")
+        f.write(data)
+
+
+    
 def create_bucket(bucket_name): # bucket_name can be of the form "some/thing/strange"
     global ROOT_PATH # absolute path to root path
     assert issubclass(type(ROOT_PATH), pathlib.Path)
@@ -195,7 +199,7 @@ def download_file(bucket_name, file_name, sock):
     file_abs_path = bucket_abs_path / file_name
     print(file_abs_path)
     output = ""
-
+    
     if file_abs_path.exists():
         file_size = file_abs_path.stat().st_size
         output = struct.pack(">Q", file_size)

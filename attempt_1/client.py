@@ -9,7 +9,6 @@ import argparse
 def download_file(bucket_name, file_name):
     global HOST
     global PORT
-
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
 
@@ -33,48 +32,35 @@ def download_file(bucket_name, file_name):
         print("{0:.2f}".format(((total_size-file_size)/float(total_size))*100)+"% Downloaded.")
         f.write(data)
 
+def upload_file(bucket_name, file_name):
+    global HOST
+    global PORT
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
+    data = { "instruction_type": str(InstructionType.UPLOAD_FILE.value),
+             "bucket_name": bucket_name,
+             "file_name": file_name,}
+    message = SentMessage(data=data)
+    message_bytes = message.create_message()
+    s.sendall(message_bytes)
 
-    """
-    file_name = input("Filename? ->")
+    if os.path.isfile(file_name):
+        file_size = file_abs_path.stat().st_size
+        output = struct.pack(">Q", file_size)
+        sock.sendall(output)
 
-    if file_name != "q":
-        s.send(bytes(file_name, "utf-8"))
-        data = s.recv(1024)
-        #print(data)
-        if data[:6] == b"EXISTS":
-            file_size = float(data[6:])
-            message = input("The file exists, do you want to download it? (Y/N) ->")
-            if message == "Y":
-                s.send(b"OK")
-                file = open("new_"+file_name, "wb")
-                data = s.recv(1024)
-                total_recieved = len(data)
-                file.write(data)
-                while total_recieved < file_size:
-                    data = s.recv(1024)
-                    total_recieved += len(data)
-                    file.write(data)
-                    print("{0:.2f}".format((total_recieved/float(file_size))*100)+"% Downloaded.")
-                print("Download completed!")
-                main()
-        else:
-            print("File does not exist :(")
-            main()
-    s.close()"""
-"""
-def upload_file(s):
-    file_name = input("Filename? ->")
-
-    if file_name != "q":
-        if (os.path.isfile(file_name)):
-        with open(file_name, "rb") as f:
+        with open(file_abs_path, "rb") as f:
             bytes_to_send = f.read()
-            s.sendall(bytes_to_send)
+            print(type(bytes_to_send))
+            sock.sendall(bytes_to_send)
+        output = "SUCCESS: The file has been downloaded."
+        return output
     else:
-        s.send(b"ERR")
-    s.close()
-"""
+        return f"ERROR: File {file_name} does not exist in given bucket"
+ 
+
+    
 def recv_response(sock):
     rm = ReceivedMessage()
     read_message(rm, sock)
@@ -198,10 +184,11 @@ class BucketShell(cmd.Cmd):
         'Lists all the files in a given bucket: LIST_FILES_FROM_BUCKET bucketName'
         list_files(str(arg))
     def do_UPLOAD_FILE(self, arg):
-        'Uploads a local file to the server: UPLOAD_FILE filePath'
-        forward(*parse(arg))
+        'Uploads a local file to the server: UPLOAD_FILE bucketName fileName'
+        split_args = arg.split()
+        upload_file(split_args[0], split_args[1])
     def do_DOWNLOAD_FILE(self, arg):
-        'Downloads a file from the server to your computer: DOWNLOAD_FILE filePath'
+        'Downloads a file from the server to your computer: DOWNLOAD_FILE bucketName fileName'
         split_args = arg.split()
         download_file(split_args[0], split_args[1])
     def do_bye(self, arg):
