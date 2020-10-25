@@ -7,10 +7,21 @@ import logging
 import argparse
 
 def download_file(bucket_name, file_name):
+    logging.basicConfig(filename="Client.log",
+            filemode="a",
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s", 
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+            )
+
+    logging.info(f'Creating a DOWNLOAD_FILE request')
+
     global HOST
     global PORT
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+
+    logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
     data = { "instruction_type": str(InstructionType.DOWNLOAD_FILE.value),
              "bucket_name": bucket_name,
@@ -18,6 +29,8 @@ def download_file(bucket_name, file_name):
     message = SentMessage(data=data)
     message_bytes = message.create_message()
     s.sendall(message_bytes)
+
+    logging.info(f'Downloading file with {type(bucket_name)} {bucket_name} AND {type(file_name)} {file_name}')
 
     file_size_bstring = s.recv(1024)
     while len(file_size_bstring) < 8:
@@ -32,11 +45,24 @@ def download_file(bucket_name, file_name):
         print("{0:.2f}".format(((total_size-file_size)/float(total_size))*100)+"% Downloaded.")
         f.write(data)
 
+    logging.info(f'Received response from server.')
+
 def upload_file(bucket_name, file_name):
+    logging.basicConfig(filename="Client.log",
+            filemode="a",
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s", 
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+            )
+
+    logging.info(f'Creating a UPLOAD_FILE request')
+
     global HOST
     global PORT
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+
+    logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
     data = { "instruction_type": str(InstructionType.UPLOAD_FILE.value),
              "bucket_name": bucket_name,
@@ -44,6 +70,9 @@ def upload_file(bucket_name, file_name):
     message = SentMessage(data=data)
     message_bytes = message.create_message()
     s.sendall(message_bytes)
+
+    logging.info(f'Uploading file with {type(bucket_name)} {bucket_name} AND {type(file_name)} {file_name}')
+
 
     if os.path.isfile(file_name):
         file_size = file_abs_path.stat().st_size
@@ -58,20 +87,33 @@ def upload_file(bucket_name, file_name):
         return output
     else:
         return f"ERROR: File {file_name} does not exist in given bucket"
- 
 
-    
+    logging.info(f'Received response from server.')
+
+
 def recv_response(sock):
     rm = ReceivedMessage()
     read_message(rm, sock)
     print(rm.data["response"])
 
 def create_bucket(bucket_name):
+    logging.basicConfig(filename="Client.log",
+            filemode="a",
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s", 
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+            )
+
+    logging.info(f'Creating a DOWNLOAD_FILE request')
+
     global HOST
     global PORT
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+
+    logging.info(f'Establishing socket connection in {HOST}:{PORT}')
+
 
     data = { "instruction_type": str(InstructionType.CREATE_BUCKET.value),
              "bucket_name": bucket_name}
@@ -79,44 +121,89 @@ def create_bucket(bucket_name):
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
+    logging.info(f'Creating bucket with {type(bucket_name)} {bucket_name}')
+
     recv_response(s)
-    
+
+    logging.info(f'Received response from server')
+
 def remove_bucket(bucket_name):
+    logging.basicConfig(filename="Client.log",
+            filemode="a",
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s", 
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+            )
+
+    logging.info(f'Creating a REMOVE_BUCKET request')
+
     global HOST
     global PORT
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
 
+    logging.info(f'Establishing socket connection in {HOST}:{PORT}')
+
     data = { "instruction_type": str(InstructionType.REMOVE_BUCKET.value),
              "bucket_name": bucket_name}
+
     message = SentMessage(data=data)
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
+    logging.info(f'removing bucket with {type(bucket_name)} {bucket_name}')
+
     recv_response(s)
 
-        
+    logging.info(f'Received response from server.')
+
 def list_buckets():
+    logging.basicConfig(filename="Client.log",
+            filemode="a",
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s", 
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+            )
+
+    logging.info(f'Creating a LIST_BUCKETS request')
+
     global HOST
     global PORT
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+
+    logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
     data = { "instruction_type": str(InstructionType.LIST_BUCKETS.value),}
     message = SentMessage(data=data)
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
+    logging.info(f'Params: None')
+
     recv_response(s)
 
+    logging.info(f'Received response from server.')
+
 def list_files(bucket_name):
+    logging.basicConfig(filename="Client.log",
+        filemode="a",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s", 
+        datefmt='%m/%d/%Y %I:%M:%S %p'
+        )
+
+    loggin.info(f'Creating a LIST_FILES request')
+
     global HOST
     global PORT
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+
+    logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
     data = { "instruction_type": str(InstructionType.LIST_FILES_FROM_BUCKET.value),
              "bucket_name": bucket_name}
@@ -124,15 +211,29 @@ def list_files(bucket_name):
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
+    logging.info(f'Linting files with {type(bucket_name)} {bucket_name}')
+
     recv_response(s)
 
+    logging.info(f'Received response from server.')
+
 def remove_bucket(bucket_name):
+    logging.basicConfig(filename="Client.log",
+        filemode="a",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s", 
+        datefmt='%m/%d/%Y %I:%M:%S %p'
+        )
+
+    logging.info(f'Creating a REMOVE_BUCKET request')
 
     global HOST
     global PORT
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+
+    logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
     data = { "instruction_type": str(InstructionType.REMOVE_BUCKET.value),
              "bucket_name": bucket_name}
@@ -140,14 +241,29 @@ def remove_bucket(bucket_name):
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
+    logging.info(f'Removing bucket with {type(bucket_name)} {bucket_name}')
+
     recv_response(s)
 
+    logging.info(f'Received response from server.')
+
 def remove_file(bucket_name, file_name):
+    logging.basicConfig(filename="Client.log",
+        filemode="a",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s", 
+        datefmt='%m/%d/%Y %I:%M:%S %p'
+        )
+
+    loggin.info(f'Creating a REMOVE FILE request')
+
     global HOST
     global PORT
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+
+    logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
     data = { "instruction_type": str(InstructionType.REMOVE_FILE_FROM_BUCKET.value),
              "bucket_name": bucket_name,
@@ -156,10 +272,12 @@ def remove_file(bucket_name, file_name):
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
+    logging.info(f'Removing file with {type(bucket_name)} {bucket_name} AND {type(file_name)} {file_name}')
+
     recv_response(s)
 
-    
-    
+    logging.info(f'Received response from server.')
+
 class BucketShell(cmd.Cmd):
     intro = "Welcome to Bucket Drive! \n Type ? or help to see commands. \n Type help COMMAND_NAME to see further information about the command. \n Type bye to leave."
     prompt = "-> "
