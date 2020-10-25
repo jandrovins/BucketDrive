@@ -45,15 +45,15 @@ def read(sock):
         logging.error(output.split("."[0]))
 
     if not "ERROR" in output:
-        logging.info(f"Creating response from server with output: {output}")
+        logging.info(f"Creating response from server with output: {output.strip()}")
     # No matter if succeded of an error occured, send response to client.
     data = {"response":output}
     response = SentMessage(data=data)
     response_bytes = response.create_message()
     if sock.sendall(response_bytes) == None:
-        logging.error("Sending response failed")
-    else:
         logging.info("Response sent succesfully")
+    else:
+        logging.error("Sending response failed")
     
 
 def upload_file(bucket_name, file_name, sock):
@@ -163,7 +163,6 @@ def list_buckets():
                 path_string = child.__str__().rsplit("/")[-1]
                 output += path_string + "\n"
     except Exception as e:
-        print(e)
         output = "ERROR: buckets could not be listed in server!"
     finally:
         if output == "":
@@ -257,7 +256,6 @@ def download_file(bucket_name, file_name, sock):
 
         with open(file_abs_path, "rb") as f:
             bytes_to_send = f.read()
-            print(type(bytes_to_send))
             sock.sendall(bytes_to_send)
         output = "SUCCESS: The file has been downloaded."
         return output

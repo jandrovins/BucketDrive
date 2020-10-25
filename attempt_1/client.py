@@ -32,18 +32,24 @@ def download_file(bucket_name, file_name):
 
     logging.info(f'Downloading file with {type(bucket_name)} {bucket_name} AND {type(file_name)} {file_name}')
 
-    file_size_bstring = s.recv(1024)
-    while len(file_size_bstring) < 8:
-        file_size_bstring += s.recv(1024)
-    file_size = struct.unpack(">Q", file_size_bstring)[0]
-    total_size = file_size
+    header_len = 8
+    recv_buffer = b""
+    bytes_recd = 0
+    while bytes_recd < header_len:
+        chunk = s.recv(min(header_len - bytes_recd, header_len))
+        if chunk == b"":
+            raise RuntimeError("socket connection broken")
+        recv_buffer += chunk
+        bytes_recd += len(chunk)
+
+    total_size = struct.unpack(">Q", recv_buffer)[0]
 
     f = open("new_"+file_name, "wb")
-    while file_size != 0:
-        data = s.recv(4096)      
-        file_size -= len(data)
-        print("{0:.2f}".format(((total_size-file_size)/float(total_size))*100)+"% Downloaded.")
-        f.write(data)
+    bytes_recd = 0
+    while bytes_recd < total_size:
+        chunk = s.recv(min(total_size-bytes_recd, 4096))
+        f.write(chunk)
+        bytes_recd += len(chunk)
 
     logging.info(f'Received response from server.')
 
@@ -328,8 +334,8 @@ def main():
 
     try:
         shell.cmdloop()
-    except:
-        print("Sorry, we were not expecting that.")
+    except Exception as e:
+        print(f"Sorry, we were not expecting that. {e}")
         
 if __name__ == "__main__":
     # Manejo de parametros
