@@ -110,44 +110,24 @@ class ReceivedMessage:
 
 def read_message(rm, sock):
     header_len = 8
-    rm.recv_buffer = sock.recv(1024)
-    while len(rm.recv_buffer) < header_len:
-        rm.recv_buffer += sock.recv(1024)
+
+    rm.recv_buffer = b""
+    bytes_recd = 0
+    while bytes_recd < header_len:
+        chunk = sock.recv(min(header_len - bytes_recd, 8))
+        if chunk == b"":
+            raise RuntimeError("socket connection broken")
+        rm.recv_buffer += chunk
+        bytes_recd += len(chunk)
+
     rm.process_header()
-    rm.recv_buffer = sock.recv(1024)
-    while len(rm.recv_buffer) < rm.process_header:
-        rm.recv_buffer += sock.recv(1024)
+
+    rm.recv_buffer = b""
+    bytes_recd = 0
+    while bytes_recd < rm.payload_size:
+        chunk = sock.recv(min(rm.payload_size - bytes_recd, 8))
+        if chunk == b"":
+            raise RuntimeError("socket connection broken")
+        rm.recv_buffer += chunk
+        bytes_recd += len(chunk)
     rm.process_payload()
-     
-class SubClient:
-    def __init__(self, message=None, host=None, port=None):
-        self.message = message
-        assert host != None
-        assert port != None
-        self.host = host
-        self.port = port
-        self.sock = None
-
-    def _send_create_bucket(self):
-        assert self.socket != None
-        assert self.message != None
-        self.sock.sendall(self.message.create_message())
-
-
-    def send(self):
-        self.sock  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.host, self.port))
-        if self.instruction_type ==  InstructionType.CREATE_BUCKET:
-            _send_create_bucket()
-        elif self.instruction_type == InstructionType.REMOVE_BUCKET: 
-            _send_remove_bucket()
-        elif self.instruction_type == InstructionType.LIST_BUCKETS: 
-            _list_buckets()
-        elif self.instruction_type == InstructionType.REMOVE_FILE_FROM_BUCKET: 
-            _remove_file_from_bucket()
-        elif self.instruction_type == InstructionType.LIST_FILES_FROM_BUCKET: 
-            _list_files_from_bucket()
-        elif self.instruction_type == InstructionType.UPLOAD_FILE: 
-            _upload_file()
-        elif self.instruction_type == InstructionType.DOWNLOAD_FILE: 
-            _download_file()
