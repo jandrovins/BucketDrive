@@ -35,7 +35,7 @@ def read(sock):
     elif instruction_type == InstructionType.UPLOAD_FILE:
         bucket_name = rm.data["bucket_name"]
         file_name = rm.data["file_name"]
-        output = download_file(str(rm.data["bucket_name"]), str(rm.data["file_name"]), sock)
+        output = upload_file(str(rm.data["bucket_name"]), str(rm.data["file_name"]), sock)
     elif instruction_type == InstructionType.DOWNLOAD_FILE:
         bucket_name = rm.data["bucket_name"]
         file_name = rm.data["file_name"]
@@ -58,6 +58,7 @@ def read(sock):
 
 def upload_file(bucket_name, file_name, sock):
     logging.info(f"Entering function 'upload_file' with bucket_name={bucket_name} of type {type(bucket_name)}, file_name={file_name} of type {type(file_name)} and socket {sock} of type {type(sock)}")
+    global ROOT_PATH
     try:
         assert issubclass(type(ROOT_PATH), pathlib.Path)
         assert str(ROOT_PATH) != ""
@@ -66,27 +67,37 @@ def upload_file(bucket_name, file_name, sock):
         assert bucket_name !=""
         assert file_name !=""
     except Exception as e:
-        return f"Assertions failed in 'upload_file': {e}"
+        return f"ERROR: Assertions failed inside 'download_file': {e}"
 
+    bucket_abs_path = ROOT_PATH / bucket_name
     if not bucket_abs_path.exists():
         return f"ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
+    file_name = file_name.__str__().rsplit("/")[-1]
     file_abs_path = bucket_abs_path / file_name
-    print(file_abs_path)
-    output = ""
+    output = "Succesfully uploaded"
+    
+    
+    header_len = 8
+    recv_buffer = b""
+    bytes_recd = 0
+    logging.info(f"Uploading file with absolute path file_abs_path={file_abs_path}")
+    while bytes_recd < header_len:
+        chunk = sock.recv(min(header_len - bytes_recd, header_len))
+        if chunk == b"":
+            raise  RuntimeError("socket connection broken")
+        recv_buffer += chunk
+        bytes_recd += len(chunk)
 
-    file_size = s.recv(8)
-    file_size = struct.unpack(">Q", file_size)[0]
-    total_size = file_size
+    total_size = struct.unpack(">Q", recv_buffer)[0]
 
-    f = open("new_"+file_name, "wb")
-    total_received = 0
-    while file_size != 0:
-        data = s.recv(4096)      
-        file_size -= len(data)
-        print("{0:.2f}".format(((total_size-file_size)/float(total_size))*100)+"% Downloaded.")
-        f.write(data)
+    f = open(file_abs_path, "wb")
+    bytes_recd = 0
+    while bytes_recd < total_size:
+        chunk = sock.recv(min(total_size-bytes_recd, 4096))
+        f.write(chunk)
+        bytes_recd += len(chunk)
 
-
+    return output
     
 def create_bucket(bucket_name): # bucket_name can be of the form "some/thing/strange"
     global ROOT_PATH # absolute path to root path

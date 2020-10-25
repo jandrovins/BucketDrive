@@ -7,6 +7,7 @@ import logging
 import argparse
 import threading
 import readline
+import pathlib
 
 def create_socket():
     global HOST
@@ -14,7 +15,6 @@ def create_socket():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
     return s
-
 
 def download_file(bucket_name, file_name):
     logging.basicConfig(filename="Client.log",
@@ -60,7 +60,7 @@ def download_file(bucket_name, file_name):
 
     logging.info(f'Received response from server.')
 
-def upload_file(bucket_name, file_name):
+def upload_file(bucket_name, file_path):
     logging.basicConfig(filename="Client.log",
             filemode="a",
             level=logging.INFO,
@@ -76,23 +76,24 @@ def upload_file(bucket_name, file_name):
 
     data = { "instruction_type": str(InstructionType.UPLOAD_FILE.value),
              "bucket_name": bucket_name,
-             "file_name": file_name,}
+             "file_name": file_path,}
     message = SentMessage(data=data)
     message_bytes = message.create_message()
     s.sendall(message_bytes)
 
-    logging.info(f'Uploading file with {type(bucket_name)} {bucket_name} AND {type(file_name)} {file_name}')
+    logging.info(f'Uploading file with {type(bucket_name)} {bucket_name} AND {type(file_path)} {file_path}')
 
+    file_path = pathlib.Path(file_path)
 
-    if os.path.isfile(file_name):
-        file_size = file_abs_path.stat().st_size
+    if file_path.is_file():
+        file_size = file_path.stat().st_size
         output = struct.pack(">Q", file_size)
-        sock.sendall(output)
+        s.sendall(output)
 
-        with open(file_abs_path, "rb") as f:
+        with open(file_path, "rb") as f:
             bytes_to_send = f.read()
             print(type(bytes_to_send))
-            sock.sendall(bytes_to_send)
+            s.sendall(bytes_to_send)
         output = "SUCCESS: The file has been downloaded."
         return output
     else:
