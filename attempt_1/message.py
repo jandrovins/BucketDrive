@@ -37,10 +37,11 @@ class SentMessage:
         return self.send_buffer
 
 class ReceivedMessage:
-    def __init__(self):
+    def __init__(self, is_response=False):
         self.recv_buffer = b"" # bytes received in the server
         self.payload_size = None
         self.data = None
+        self.is_response = is_response
 
     def process_header(self):
         header_len = 8 # since we are using unsigned long long
@@ -61,13 +62,13 @@ class ReceivedMessage:
     def process_payload(self, is_response = False):
         assert self.payload_size != None
         assert self.data == None
-        header_len = self.payload_size # we must have read the header
+        header_len = self.payload_size
         if len(self.recv_buffer) >= header_len:
             self.payload =  self.json_decode(self.recv_buffer[:header_len], "utf-8")
             self.recv_buffer[header_len:]
             self.data = {}
 
-            if is_response:
+            if self.is_response:
                 self.data["response"] = self.payload["response"]
                 return
             

@@ -10,34 +10,42 @@ import argparse
 from message import *
 
 def read(sock):
+    logging.info("Reading new connection message")
     rm = ReceivedMessage()
     read_message(rm, sock)
-    if rm.data["instruction_type"] == InstructionType.CREATE_BUCKET.value:
+    instruction_type = InstructionType(rm.data['instruction_type'])
+    logging.info(f"The data received is: {rm.data}")
+    logging.info(f"The instruction type is: {instruction_type.name}")
+
+    if instruction_type == InstructionType.CREATE_BUCKET:
         bucket_name = rm.data["bucket_name"]
         output = create_bucket(bucket_name)
-    elif rm.data["instruction_type"] == InstructionType.REMOVE_BUCKET.value:
+    elif instruction_type == InstructionType.REMOVE_BUCKET:
         bucket_name = rm.data["bucket_name"]
         output = remove_bucket(bucket_name)
-    elif rm.data["instruction_type"] == InstructionType.LIST_BUCKETS.value:
+    elif instruction_type == InstructionType.LIST_BUCKETS:
         output = list_buckets()
-    elif rm.data["instruction_type"] == InstructionType.REMOVE_FILE_FROM_BUCKET.value:
+    elif instruction_type == InstructionType.REMOVE_FILE_FROM_BUCKET:
         bucket_name = rm.data["bucket_name"]
         file_name = rm.data["file_name"]
         output = remove_file_from_bucket(str(rm.data["bucket_name"]), str(rm.data["file_name"]))
-    elif rm.data["instruction_type"] == InstructionType.LIST_FILES_FROM_BUCKET.value:
+    elif instruction_type == InstructionType.LIST_FILES_FROM_BUCKET:
         bucket_name = rm.data["bucket_name"]
         output = list_files(bucket_name)
-    elif rm.data["instruction_type"] == InstructionType.UPLOAD_FILE.value:
+    elif instruction_type == InstructionType.UPLOAD_FILE:
         bucket_name = rm.data["bucket_name"]
         file_name = rm.data["file_name"]
         output = download_file(str(rm.data["bucket_name"]), str(rm.data["file_name"]), sock)
-    elif rm.data["instruction_type"] == InstructionType.DOWNLOAD_FILE.value:
+    elif instruction_type == InstructionType.DOWNLOAD_FILE:
         bucket_name = rm.data["bucket_name"]
         file_name = rm.data["file_name"]
         output = download_file(str(rm.data["bucket_name"]), str(rm.data["file_name"]), sock)
     else:
         output = "ERROR: no instruction type was parsed correctly. Check your message"
+        logging.error(output.split("."[0]))
 
+    if not "ERROR" in output:
+        logging.info("Creating response from server with output: {output}")
     # No matter if succeded of an error occured, send response to client.
     data = {"response":output}
     response = SentMessage(data=data)
