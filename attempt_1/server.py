@@ -45,21 +45,28 @@ def read(sock):
         logging.error(output.split("."[0]))
 
     if not "ERROR" in output:
-        logging.info("Creating response from server with output: {output}")
+        logging.info(f"Creating response from server with output: {output}")
     # No matter if succeded of an error occured, send response to client.
     data = {"response":output}
     response = SentMessage(data=data)
     response_bytes = response.create_message()
-    sock.sendall(response_bytes)
+    if sock.sendall(response_bytes) == None:
+        logging.error("Sending response failed")
+    else:
+        logging.info("Response sent succesfully")
     
 
 def upload_file(bucket_name, file_name, sock):
-    assert issubclass(type(ROOT_PATH), pathlib.Path)
-    assert str(ROOT_PATH) != ""
-    assert type(bucket_name) == str
-    assert type(file_name) == str
-    assert bucket_name !=""
-    assert file_name !=""
+    logging.info(f"Entering function 'upload_file' with bucket_name={bucket_name} of type {type(bucket_name)}, file_name={file_name} of type {type(file_name)} and socket {sock} of type {type(sock)}")
+    try:
+        assert issubclass(type(ROOT_PATH), pathlib.Path)
+        assert str(ROOT_PATH) != ""
+        assert type(bucket_name) == str
+        assert type(file_name) == str
+        assert bucket_name !=""
+        assert file_name !=""
+    except Exception as e:
+        return f"Assertions failed in 'upload_file': {e}"
 
     if not bucket_abs_path.exists():
         return f"ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
@@ -83,35 +90,51 @@ def upload_file(bucket_name, file_name, sock):
     
 def create_bucket(bucket_name): # bucket_name can be of the form "some/thing/strange"
     global ROOT_PATH # absolute path to root path
-    assert issubclass(type(ROOT_PATH), pathlib.Path)
-    assert str(ROOT_PATH) != ""
-    assert type(bucket_name) == str
-    assert bucket_name != ""
-    assert "/" not in bucket_name
+    logging.info(f"Entering 'create_bucket' function with bucket_name={bucket_name} and type {type(bucket_name)}")
+    try:
+        assert issubclass(type(ROOT_PATH), pathlib.Path)
+        assert str(ROOT_PATH) != ""
+        assert type(bucket_name) == str
+        assert bucket_name != ""
+        assert "/" not in bucket_name
+    except Exception as e:
+        output = f"Assertions failed in 'create_bucket': {e}"
+        return output
 
     absolute_path = ROOT_PATH / bucket_name
-
+    logging.info(f"Creating bucket with absolute path={absolute_path}")
     try:
         absolute_path.mkdir()
     except FileExistsError as e:
-        return f"ERROR: The bucket {absolute_path} already exists"
-    except e:
-        print (e)
+        output = f"ERROR: The bucket {absolute_path} already exists"
+        return output
+    except Exception as e:
+        output = str(e)
+        return output
     finally:
         if absolute_path.exists(): # was created succesfully
-            return f"SUCCESS: Success creating bucket '{bucket_name}'"
+            output = f"SUCCESS: Success creating bucket '{bucket_name}'"
+            return output
         else:
-            return f"ERROR: The bucket '{bucket_name}' could not be created in server"
+            output = f"ERROR: The bucket '{bucket_name}' could not be created in server"
+            return output
 
 def remove_bucket(bucket_name): # bucket_name can be of the form "some/thing/strange"
+    logging.info(f"Entering function 'remove_bucket' with bucket_name={bucket_name} with type {type(bucket_name)}")
     global ROOT_PATH # absolute path to root path
-    assert issubclass(type(ROOT_PATH), pathlib.Path)
-    assert str(ROOT_PATH) != ""
-    assert type(bucket_name) == str
-    assert bucket_name != ""
-    assert "/" not in bucket_name 
+    try:
+        assert issubclass(type(ROOT_PATH), pathlib.Path)
+        assert str(ROOT_PATH) != ""
+        assert type(bucket_name) == str
+        assert bucket_name != ""
+        assert "/" not in bucket_name 
+    except Exception as e:
+        output = f"Assertions failed in 'remove_bucket': {e}"
+        return output
 
     absolute_path = ROOT_PATH / bucket_name
+
+    logging.info(f"Removing bucket with absolute path={absolute_path}")
     try:
         shutil.rmtree(absolute_path.__str__())
     except FileNotFoundError as e:
@@ -124,16 +147,22 @@ def remove_bucket(bucket_name): # bucket_name can be of the form "some/thing/str
 
 def list_buckets():
     global ROOT_PATH
-    assert issubclass(type(ROOT_PATH), pathlib.Path)
-    assert str(ROOT_PATH) != ""
+    logging.info("Entering function 'list_buckets'")
+    try:
+        assert issubclass(type(ROOT_PATH), pathlib.Path)
+        assert str(ROOT_PATH) != ""
+    except Exception as e:
+        output = f"Assertions failed in 'list_buckets': {e}"
+        return output
+
     output = "" # string to send to client
-    
+    logging.info("Listing buckets")
     try:
         for child in ROOT_PATH.iterdir():
             if child.is_dir():
                 path_string = child.__str__().rsplit("/")[-1]
                 output += path_string + "\n"
-    except e:
+    except Exception as e:
         print(e)
         output = "ERROR: buckets could not be listed in server!"
     finally:
@@ -143,24 +172,29 @@ def list_buckets():
 
 def remove_file_from_bucket(bucket_name, file_name):
     global ROOT_PATH
-    assert issubclass(type(ROOT_PATH), pathlib.Path)
-    assert str(ROOT_PATH) != ""
-    assert type(bucket_name) == str
-    assert type(file_name) == str
-    assert bucket_name !=""
-    assert file_name !=""
+    logging.info(f"Entering function 'remove_file_from_bucket' with bucket_name={bucket_name} of type {type(bucket_name)}, and file_name={file_name} of type {type(file_name)}")
+    try:
+        assert issubclass(type(ROOT_PATH), pathlib.Path)
+        assert str(ROOT_PATH) != ""
+        assert type(bucket_name) == str
+        assert type(file_name) == str
+        assert bucket_name !=""
+        assert file_name !=""
+    except Exception as e:
+        return f"Assertions failed in 'remove_file_from_bucket': {e}"
 
     output = ""
     bucket_abs_path = ROOT_PATH / bucket_name 
     if not bucket_abs_path.exists():
         return f"ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
     file_abs_path = bucket_abs_path / file_name 
+    logging.info(f"Removing file with absolute path file_abs_path={file_abs_path}")
     try:
         file_abs_path.unlink()
 
     except FileNotFoundError as e:
         output = f"ERROR: File {file_name} not found on bucket {bucket_name}"
-    except:
+    except Exception as e:
         output = f"ERROR: File {file_name} could not be removed from {bucket_name}"
     finally:
         if output == "":
@@ -169,14 +203,19 @@ def remove_file_from_bucket(bucket_name, file_name):
 
 def list_files(bucket_name):
     global ROOT_PATH
-    assert issubclass(type(ROOT_PATH), pathlib.Path)
-    assert str(ROOT_PATH) != ""
-    assert type(bucket_name) == str
-    assert bucket_name !=""
+    logging.info(f"Entering function 'list_files' with bucket_name={bucket_name}")
+    try:
+        assert issubclass(type(ROOT_PATH), pathlib.Path)
+        assert str(ROOT_PATH) != ""
+        assert type(bucket_name) == str
+        assert bucket_name !=""
+    except Exception as e:
+        return f"Assertions failed in 'list_files': {e}"
 
     bucket_abs_path = ROOT_PATH / bucket_name 
+    logging.info(f"Listing files from bucket with absolute path bucket_abs_path={bucket_abs_path}")
     if not bucket_abs_path.exists():
-        return "ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
+        return f"ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
 
     output = ""
     try:
@@ -184,28 +223,31 @@ def list_files(bucket_name):
             if child.is_file():
                 path_string = child.__str__().rsplit("/")[-1]
                 output += path_string + "\n"
-    except e:
+    except Exception as e:
         output = "ERROR: files could not be listed in server!"
     finally:
         if output == "":
-            output = "SUCCESS: There are no files inside '{bucket_name}' yet!"
+            output = f"SUCCESS: There are no files inside '{bucket_name}' yet!"
         return output
 
 def download_file(bucket_name, file_name, sock):
     global ROOT_PATH
-    assert issubclass(type(ROOT_PATH), pathlib.Path)
-    assert str(ROOT_PATH) != ""
-    assert type(bucket_name) == str
-    assert type(file_name) == str
-    assert bucket_name !=""
-    assert file_name !=""
+    logging.info(f"Entering function 'download_file' with bucket_name={bucket_name} of type {type(bucket_name)}, file_name={file_name} with type {type(file_name)} and socket {sock} with type {type(sock)}")
+    try:
+        assert issubclass(type(ROOT_PATH), pathlib.Path)
+        assert str(ROOT_PATH) != ""
+        assert type(bucket_name) == str
+        assert type(file_name) == str
+        assert bucket_name !=""
+        assert file_name !=""
+    except Exception as e:
+        return f"ERROR: Assertions failed inside 'download_file': {e}"
 
     bucket_abs_path = ROOT_PATH / bucket_name
-    #print(bucket_abs_path)                                                                                                                                   
     if not bucket_abs_path.exists():
         return f"ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}'"
     file_abs_path = bucket_abs_path / file_name
-    print(file_abs_path)
+    logging.info(f"Sending file to client with absolute path file_abs_path={file_abs_path}")
     output = ""
     
     if file_abs_path.exists():
