@@ -92,7 +92,7 @@ def upload_file(bucket_name, file_name):
 
 
 def recv_response(sock):
-    rm = ReceivedMessage()
+    rm = ReceivedMessage(is_response=True)
     read_message(rm, sock)
     print(rm.data["response"])
 
