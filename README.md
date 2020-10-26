@@ -1,12 +1,12 @@
 # BucketDrive
 
-Primera práctica para Telemática ST0255.
+Práctica 1 para la materia de Telemática ST0255.
 
 ### Integrantes:
 
-- Vincent Alejandro Arcila LArrea
+- Vincent Alejandro Arcila Larrea
 
-- Isabel Piedrahíta Vález
+- Isabel Piedrahíta Vélez
 
 ## 1. Especificación del Servicio
 
@@ -29,8 +29,7 @@ El presente es un servicio de almacenamiento de archivos como documentos, imáge
 
 Para efectos de facilidad de uso se desarrolló una shell interactiva llamada BucketShell para el cliente, en la que se implementaron además de los comandos básicos de BucketDrive comandos de ayuda para el usuario. Estos comandos de ayuda listan la sintaxis correcta de cada una de estas operaciones y explican lo que cada una hace. Las instrucciones para llamar a estas ayudas son visibles cuando el cliente accede a BucketShell.
 
-Finalmente, algunas consideraciones adicionales sobre el servicio. El comportamiento del servidor se presta para manejar a multiples clientes de manera concurrente, cada cliente puede conectarse y desconectarse del servidor en el momento que lo considere. El servidor tiene la capacidad de recibir comandos del cliente aún si se encuentra enviando un archivo de respuesta a este. Tanto los buckets como los archivos dentro de los mismos tienen un identificador único que coincide con el nombre que el usuario les haya dado, por lo que bucket drive no tiene soporte para buckets o archivos de igual nombre que uno previamente existente. Por último, para garantizar la transparencia en operaciones, tanto el servidor como el cliente generan un log en donde sus actividades son visibles y fácilmente rastreables.
-
+Finalmente, algunas consideraciones adicionales sobre el servicio. El comportamiento del servidor se presta para manejar a multiples clientes de manera concurrente por medio de threads, cada cliente puede conectarse y desconectarse del servidor en el momento que lo considere. Del mismo modo, el cliente puede descargar y subir archivos al servidor sin perder conexión ni la capacidad de hacer otras peticiones al servidor. El servidor tiene la capacidad de recibir comandos del cliente aún si se encuentra enviando un archivo de respuesta a este. Tanto los buckets como los archivos dentro de los mismos tienen un identificador único que coincide con el nombre que el usuario les haya dado, por lo que bucket drive no tiene soporte para buckets o archivos de igual nombre que uno previamente existente. Por último, para garantizar la transparencia en operaciones, tanto el servidor como el cliente generan un log en donde sus actividades son visibles y fácilmente rastreables.
 
 ## 2. Vocabulario del Mensaje
 
@@ -49,9 +48,15 @@ En BucketDrive existe un mensaje especial: aquel que lleva consigo un archivo. P
 
 A continuación la estructura gráfica del mensaje:
 
-![image.png](attachment:830500f5-1819-497d-8fad-dd614cec4897.png)
+![image.png](attachment:0ecd762e-bc41-4b73-a35c-6d490838097e.png)
 
-Los mensajes que puede enviar el cliente están definidos de la siguiente forma. En la tabla verá el valor real o sintáctico y entre paréntesis su significado semántico en la columna de Header, mientras que en la columna de Payload encontrará la estructura del JSON correspondiente, en la que es muy fácil deducir a que se refiere el código y por ende no se pondrá entre paréntesis su significado semántico. Todas estas peticiones de cliente son independientes entre si y el servidor no requiere guardar inguna información de estado para atenderlas.
+## 3. Regla de Procedimientos
+
+La estructura general del protocolo se explica en el siguiente diagrama.
+
+![image.png](attachment:2dfc5f48-db82-44bf-82b0-33fdf5cf3035.png)
+
+Los mensajes que puede enviar el cliente están definidos de la siguiente forma. En la tabla verá el valor real o sintáctico y entre paréntesis su significado semántico en la columna de Header, mientras que en la columna de Payload encontrará la estructura del JSON correspondiente, en la que es muy fácil deducir a que se refiere el código y por ende no se pondrá entre paréntesis su significado semántico. Todas estas peticiones de cliente son independientes entre si y el servidor no requiere mantener información de estado para manejar estas.
 
 | Header | Payload   |
 |------|------|
@@ -63,16 +68,7 @@ Los mensajes que puede enviar el cliente están definidos de la siguiente forma.
 |   6 (UPLOAD_FILE) | "bucket_name": bucket_name, "file_name": file_name |
 |   7 (DOWNLOAD_FILE) | "bucket_name": bucket_name, "file_name": file_name |
 
-
-## 3. Regla de Procedimientos
-
-La estructuctura general del protocolo se ilustra en el siguiente diagrama.
-
-
-![image.png](attachment:24517085-3093-4f08-8858-50de56d28f16.png)
-
-
-Los mensajes recibidos son todos muy similares en estructura, contienen un output que representa la información que se le debe mostrar al cliente. Este output es una string.
+Los mensajes recibidos son todos muy similares en estructura, contienen un output que representa la información que se le debe mostrar al cliente. Este output es una string. Siempre que se envía un mensaje, se debe esperar un mensaje de respuesta.
 
 | Header | Payload   |
 |------|------|
@@ -87,3 +83,5 @@ Los errores en BucketDrive se manejan mediante la captura de excepciones, hay pr
 | Error de inexistencia | ERROR: Bucket '{bucket_name}' does not exist inside root directory '{ROOT_PATH}', ERROR: file '{file}' does not exist inside bucket '{bucket_name}' |
 
 El procesamiento de mensajes se da en la función read() para los mensajes que van del cliente al servidor. En esta función se decodifica el tipo de instrucción y los parámetros y con esta información se llama a la función requerida. El procesamiento de los mensajes que van del servidor al cliente se da en la función recv_message() en la que se extrae la respuesta del JSON que trae el mensaje y se imprime directamente a BucketShell.
+
+
