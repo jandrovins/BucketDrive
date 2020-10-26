@@ -34,15 +34,22 @@ Finalmente, algunas consideraciones adicionales sobre el servicio. El comportami
 
 ## 2. Vocabulario del Mensaje
 
+BucketDrive utiliza una misma estructura de mensaje para todas sus comunicaciones; nuestros mensajes están divididos en 2: 
 
+Un header de tamaño constante y un payload de tamaño variable. En el header se envía un entero con el tamaño del payload del mensaje, formateado en big-endian y en ‘unsigned long long’. De este modo, el receptor siempre sabe cuántos bytes leer del socket para procesar el payload.
+El payload siempre está  formateado en JSON, y codificado en “UTF-8”. Con este formato de mensaje, simplificamos en gran medida el proceso de leer un mensaje, pues al ser un JSON el formato es constante e independiente del contexto. 
 
-## 3. Regla de Procedimientos
+Cuando el mensaje lo envía el cliente: en el payload enviamos el tipo de instrucción que debe realizar el servidor, así como los parámetros necesarios para  este. Por ejemplo, en el campo “instruction_type” iría el tipo de instrucción 1 (en nuestro código los tipos de instrucción los manejamos con enumeraciones) con lo cual el servidor ya sabe que la instrucción a realizar es crear un bucket, y en el campo “bucket_name” del JSON iría una string con el nombre del bucket a crear.
 
-La estructuctura general del protocolo se ilustra en el siguiente diagrama.
+Cuando el mensaje lo envía el servidor: este mensaje sería casi siempre de tipo respuesta, enviando la información pedida por el cliente. En el campo “response” del payload iría la cadena de texto de respuesta.
 
+El cliente también envía mensajes de tipo respuesta, del mismo modo que lo acabamos de ilustrar para el servidor. Las conexiones siempre comparten el estado del proceso con su contraparte.
 
-![image.png](attachment:24517085-3093-4f08-8858-50de56d28f16.png)
+En BucketDrive existe un mensaje especial: aquel que lleva consigo un archivo. Para estos casos, luego de enviarse el payload, también se enviará el tamaño del archivo a enviar, del mismo modo que se envía el primer header. Seguidamente se enviará el archivo.
 
+A continuación la estructura gráfica del mensaje:
+
+![image.png](attachment:830500f5-1819-497d-8fad-dd614cec4897.png)
 
 Los mensajes que puede enviar el cliente están definidos de la siguiente forma. En la tabla verá el valor real o sintáctico y entre paréntesis su significado semántico en la columna de Header, mientras que en la columna de Payload encontrará la estructura del JSON correspondiente, en la que es muy fácil deducir a que se refiere el código y por ende no se pondrá entre paréntesis su significado semántico. Todas estas peticiones de cliente son independientes entre si y el servidor no requiere guardar inguna información de estado para atenderlas.
 
@@ -55,6 +62,15 @@ Los mensajes que puede enviar el cliente están definidos de la siguiente forma.
 |   5 (LIST_FILES_FROM_BUCKET) | "bucket_name": bucket_name |
 |   6 (UPLOAD_FILE) | "bucket_name": bucket_name, "file_name": file_name |
 |   7 (DOWNLOAD_FILE) | "bucket_name": bucket_name, "file_name": file_name |
+
+
+## 3. Regla de Procedimientos
+
+La estructuctura general del protocolo se ilustra en el siguiente diagrama.
+
+
+![image.png](attachment:24517085-3093-4f08-8858-50de56d28f16.png)
+
 
 Los mensajes recibidos son todos muy similares en estructura, contienen un output que representa la información que se le debe mostrar al cliente. Este output es una string.
 
