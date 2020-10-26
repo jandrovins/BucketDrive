@@ -5,16 +5,9 @@ import cmd
 import sys
 import logging
 import argparse
+import pathlib
 import threading
 import readline
-import pathlib
-
-def create_socket():
-    global HOST
-    global PORT
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
-    return s
 
 def download_file(bucket_name, file_name):
     logging.basicConfig(filename="Client.log",
@@ -26,7 +19,10 @@ def download_file(bucket_name, file_name):
 
     logging.info(f'Creating a DOWNLOAD_FILE request')
 
-    s = create_socket()
+    global HOST
+    global PORT
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -70,7 +66,10 @@ def upload_file(bucket_name, file_path):
 
     logging.info(f'Creating a UPLOAD_FILE request')
 
-    s = create_socket()
+    global HOST
+    global PORT
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -115,7 +114,11 @@ def create_bucket(bucket_name):
 
     logging.info(f'Creating a DOWNLOAD_FILE request')
 
-    s = create_socket()
+    global HOST
+    global PORT
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -142,7 +145,11 @@ def remove_bucket(bucket_name):
 
     logging.info(f'Creating a REMOVE_BUCKET request')
 
-    s = create_socket()
+    global HOST
+    global PORT
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -169,7 +176,11 @@ def list_buckets():
 
     logging.info(f'Creating a LIST_BUCKETS request')
 
-    s = create_socket()
+    global HOST
+    global PORT
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -194,7 +205,11 @@ def list_files(bucket_name):
 
     logging.info(f'Creating a LIST_FILES request')
 
-    s = create_socket()
+    global HOST
+    global PORT
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -220,7 +235,11 @@ def remove_bucket(bucket_name):
 
     logging.info(f'Creating a REMOVE_BUCKET request')
 
-    s = create_socket()
+    global HOST
+    global PORT
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -244,9 +263,13 @@ def remove_file(bucket_name, file_name):
         datefmt='%m/%d/%Y %I:%M:%S %p'
         )
 
-    logging.info(f'Creating a REMOVE FILE request')
+    logging.info(f'Creating a REMOVE_FILE request')
 
-    s = create_socket()
+    global HOST
+    global PORT
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
 
     logging.info(f'Establishing socket connection in {HOST}:{PORT}')
 
@@ -269,6 +292,7 @@ class BucketShell(cmd.Cmd):
     file = None
     
     # Basic Bucket Drive commands
+
     def do_CREATE_BUCKET(self, arg):
         'Creates a bucket with a given name: CREATE_BUCKET bucketName'
         create_bucket(str(arg))
@@ -289,12 +313,10 @@ class BucketShell(cmd.Cmd):
         'Uploads a local file to the server: UPLOAD_FILE bucketName fileName'
         split_args = arg.split()
         t = threading.Thread(target=upload_file, args=(split_args[0], split_args[1]))
-        t.start()
     def do_DOWNLOAD_FILE(self, arg):
         'Downloads a file from the server to your computer: DOWNLOAD_FILE bucketName fileName'
         split_args = arg.split()
         t = threading.Thread(target=download_file, args=(split_args[0], split_args[1]))
-        t.start()
     def do_bye(self, arg):
         'Stop recording, close the turtle window, and exit:  BYE'
         print('Bye bye!')
@@ -307,6 +329,9 @@ class BucketShell(cmd.Cmd):
             self.file = None
 
 def main():
+    global HOST
+    global PORT
+    
     shell = BucketShell()
 
     try:
