@@ -96,7 +96,7 @@ def upload_file(bucket_name, file_name, sock):
         f.write(chunk)
         bytes_recd += len(chunk)
 
-    output = "Succesfully uploaded file '{file_name}' into '{bucket_name}'"
+    output = f"Succesfully uploaded file '{file_name}' into '{bucket_name}'"
     data = {"response":output}
     response = SentMessage(data=data)
     response_bytes = response.create_message()
