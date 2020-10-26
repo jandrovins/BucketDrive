@@ -299,11 +299,10 @@ def main():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a BucketDrive server")
     parser.add_argument("--port", type=int, metavar="PORT", choices=[i for i in range(1000, 65534)], default=7777, help="Port on which open the socket. Should be between 1000 and 65535. Default is 7777")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host on which the server will run. Default is 127.0.0.1")
     parser.add_argument("--root", type=str, default="", help="Root directory in which the buckets will be managed. Default is the actual directory")
     
     args = parser.parse_args()
-    HOST = args.host
+    HOST = ""
     PORT = args.port
     ROOT_PATH = pathlib.Path(args.root)
     # Configure logging
