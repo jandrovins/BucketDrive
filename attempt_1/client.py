@@ -45,7 +45,7 @@ def download_file(bucket_name, file_name):
 
     total_size = struct.unpack(">Q", recv_buffer)[0]
 
-    f = open("new_"+file_name, "wb")
+    f = open(file_name, "wb")
     bytes_recd = 0
     while bytes_recd < total_size:
         chunk = s.recv(min(total_size-bytes_recd, 4096))
