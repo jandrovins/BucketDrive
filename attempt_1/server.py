@@ -42,11 +42,13 @@ def read(sock):
         output = download_file(str(rm.data["bucket_name"]), str(rm.data["file_name"]), sock)
     else:
         output = "ERROR: no instruction type was parsed correctly. Check your message"
-        logging.error(output.split("."[0]))
+        logging.error(output)
 
     if not "ERROR" in output:
         logging.info(f"Creating response from server with output: {output.strip()}")
-    # No matter if succeded of an error occured, send response to client.
+    else:
+        logging.error(f"Error in doing action requested; Creating response from server with output: {output.strip()}")
+    # No matter if succeded or an error occured, send response to client.
     data = {"response":output}
     response = SentMessage(data=data)
     response_bytes = response.create_message()
@@ -280,7 +282,11 @@ def main():
     logging.debug(f"Creating socket")
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     logging.info(f"Binding socket to {HOST}:{PORT}")
-    s.bind((HOST, PORT))
+    try:
+        s.bind((HOST, PORT))
+    except OSError as e:
+        logging.error("Port already on use! Cannot bind socket")
+        sys.exit("Port already on use! Cannot bind socket")
     backlog = 5 
     logging.info(f"Socket listening with backlog={backlog}")
     s.listen(backlog)
@@ -315,8 +321,8 @@ if __name__ == "__main__":
 
     if not ROOT_PATH.is_absolute():
         ROOT_PATH = pathlib.Path.cwd() / ROOT_PATH # make absolute path
-        ROOT_PATH.mkdir(exist_ok=True)
+    ROOT_PATH.mkdir(exist_ok=True)
 
-    logging.info(f"STARTED SERVER ON ROOT PATH {ROOT_PATH}, USING {HOST}:{PORT}")
+    logging.info(f"STARTED PROGRAM ON ROOT PATH {ROOT_PATH}, USING {HOST}:{PORT}")
 
     main()
