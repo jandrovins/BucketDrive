@@ -330,7 +330,7 @@ if __name__ == "__main__":
 
     if not ROOT_PATH.is_absolute():
         ROOT_PATH = pathlib.Path.cwd() / ROOT_PATH # make absolute path
-        ROOT_PATH.mkdir(exist_ok=True)
+    ROOT_PATH.mkdir(exist_ok=True)
 
     logging.info(f"STARTED SERVER ON ROOT PATH {ROOT_PATH}, USING {HOST}:{PORT}")
 
